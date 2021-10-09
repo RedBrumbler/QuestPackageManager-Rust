@@ -4,14 +4,14 @@ use colored::Colorize;
 use crate::data::dependency;
 use crate::data::package::{PackageConfig};
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Dependency {
     #[clap(subcommand)]
     pub op: DependencyOperation
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub enum DependencyOperation {
     /// Add a dependency
@@ -20,7 +20,7 @@ pub enum DependencyOperation {
     Remove(DependencyOperationRemoveArgs)
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct DependencyOperationAddArgs {
     /// Id of the dependency as listed on qpackages
@@ -35,7 +35,7 @@ pub struct DependencyOperationAddArgs {
     pub additional_data: Option<String>
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct DependencyOperationRemoveArgs {
     /// Id of the dependency as listed on qpackages

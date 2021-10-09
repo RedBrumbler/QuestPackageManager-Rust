@@ -1,6 +1,6 @@
 use clap::{Clap, AppSettings};
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Cache {
     /// Clear the cache
@@ -8,7 +8,7 @@ pub struct Cache {
     pub op: CacheOperation
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 pub enum CacheOperation {
     /// Clear the cache
     Clear

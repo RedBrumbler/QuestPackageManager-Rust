@@ -2,14 +2,14 @@ use clap::{AppSettings, Clap};
 
 use crate::data::package::{PackageConfig, PackageInfo, AdditionalPackageData};
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Package {
     #[clap(subcommand)]
     pub op: PackageOperation
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub enum PackageOperation {
     /// Create a package
@@ -20,7 +20,7 @@ pub enum PackageOperation {
     EditExtra
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Edit {
     ///Edit the id property of the package
@@ -37,7 +37,7 @@ pub struct Edit {
     pub version: Option<String>
 }
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Debug, Clone)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct PackageOperationCreateArgs {
     /// The name of the package
