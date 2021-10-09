@@ -1,3 +1,5 @@
+cargo-features = ["strip"]
+
 [package]
 name = "qpm-rust"
 version = "0.1.0"
@@ -16,3 +18,9 @@ unwrap = "1.2.1"
 cursed-semver-parser = { git = "https://github.com/raftario/cursed-semver-parser.git" }
 lazy_static = "1.4.0"
 colored = "2.0.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = "symbols"
