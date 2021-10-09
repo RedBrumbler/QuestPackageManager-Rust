@@ -18,7 +18,7 @@ struct Opts {
     subcmd: MainCommand
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Clap, Debug)]
 enum MainCommand {
     /// Cache control
     Cache(commands::cache::Cache),
@@ -46,7 +46,7 @@ enum MainCommand {
 
 fn main() {
     let opts: Opts = Opts::parse();
-    let token = opts.token.clone();
+    let token = opts.token;
     if token.is_some()
     {
         println!("using token {}", token.unwrap());

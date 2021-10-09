@@ -2,14 +2,14 @@ use clap::{Clap, AppSettings};
 
 use crate::data::mod_json::{ModJson};
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Clap, Debug)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Qmod {
     #[clap(subcommand)]
     pub op: QmodOperation
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Clap, Debug)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct CreateQmodJsonOperationArgs {
     /// The schema version this mod was made for
@@ -44,7 +44,7 @@ pub struct CreateQmodJsonOperationArgs {
     pub cover_image: Option<String>,
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Clap, Debug)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub enum QmodOperation {
     Create(CreateQmodJsonOperationArgs),

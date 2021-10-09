@@ -23,11 +23,12 @@ pub struct PackageVersion {
     pub version: String
 }
 
+
 /// Requests the appriopriate package info from qpackage.com
 pub fn get_versions(id: &str, req: &str, limit: i32) -> Vec<PackageVersion>
 {
     let url = format!("{}/{}/?req={}&limit={}", &API_URL, &id, &req, &limit);
-
+    
     if let Some(entry) = VERSIONS_CACHE.lock().unwrap().get(&url) {
         return entry.clone();
     }
@@ -42,14 +43,13 @@ pub fn get_versions(id: &str, req: &str, limit: i32) -> Vec<PackageVersion>
 pub fn get_shared_package(id: &str, ver: &str) -> SharedPackageConfig
 {
     let url = format!("{}/{}/{}", &API_URL, &id, &ver);
-    if let Some (entry) = SHARED_PACKAGE_CACHE.lock().unwrap().get(&url) {
+    if let Some (entry) = SHARED_PACKAGE_CACHE.lock().unwrap().get_mut(&url) {
         return entry.clone();
     }
 
-    let response = ureq::get(&url).call().expect("Request to qpackages.com failed").into_string().expect("Into string failed");
+    // todo: async
+    let shared_package: SharedPackageConfig = ureq::get(&url).call().expect("Request to qpackages.com failed").into_json().expect("Deserialize json failed");
 
-    let shared_package = serde_json::from_str::<SharedPackageConfig>(&response).expect("Deserialize from string failed!");
-
-    SHARED_PACKAGE_CACHE.lock().unwrap().insert(url, shared_package.clone());
+    SHARED_PACKAGE_CACHE.lock().unwrap().insert(url, shared_package.clone()).unwrap();
     shared_package
 }

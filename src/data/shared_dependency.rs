@@ -11,7 +11,7 @@ use std::collections::hash_map::DefaultHasher;
 #[derive(Serialize, Deserialize, Clone, Debug, Hash, Eq, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SharedDependency {
-    pub dependency: Dependency,
+    pub dependency: Dependency, // TODO: Instead of cloning, reference?
     pub version: String
 }
 
@@ -73,10 +73,12 @@ impl SharedDependency {
             {
                 // get shared package to add to the hashmap
                 let mut shared_package = self.get_shared_package();
+
+
                 
                 // remove private deps
                 shared_package.restored_dependencies.retain(|restored_dependency| {
-                    if let Some(is_private) = restored_dependency.dependency.additional_data.is_private {
+                    if let Some(is_private) = &restored_dependency.dependency.additional_data.is_private {
                         return !is_private;
                     }
         

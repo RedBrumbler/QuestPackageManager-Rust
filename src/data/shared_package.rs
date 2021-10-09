@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use crate::data::package;
 use crate::data::shared_dependency::SharedDependency;
-use std::io::{Read, Write};
+use std::io::BufReader;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -14,19 +14,17 @@ pub struct SharedPackageConfig {
 impl SharedPackageConfig {
     pub fn read() -> SharedPackageConfig
     {
-        let mut file = std::fs::File::open("qpm.shared.json").expect("Opening qpm.shared.json failed");
-        let mut qpm_package = String::new();
-        file.read_to_string(&mut qpm_package).expect("Reading data failed");
+        let file = std::fs::File::open("qpm.shared.json").expect("Opening qpm.json failed");
+        // Open the file in read-only mode with buffer.
+        let reader = BufReader::new(file);
 
-        serde_json::from_str::<SharedPackageConfig>(&qpm_package).expect("Deserializing package failed")
+        serde_json::from_reader::<_, SharedPackageConfig>(reader).expect("Deserializing package failed")
     }
 
     pub fn write(&self)
     {
-        let qpm_package = serde_json::to_string_pretty(&self).expect("Serialization failed");
-
-        let mut file = std::fs::File::create("qpm.shared.json").expect("create failed");
-        file.write_all(qpm_package.as_bytes()).expect("write failed");
+        let file = std::fs::File::create("qpm.shared.json").expect("create failed");
+        serde_json::to_writer_pretty::<_, SharedPackageConfig>(file, self).expect("Unable to write qpm.shared.json");
         println!("Package {} Written!", self.config.info.id);
     }
 

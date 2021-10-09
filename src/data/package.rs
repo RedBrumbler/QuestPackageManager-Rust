@@ -1,11 +1,12 @@
 use serde::{Serialize, Deserialize};
 use crate::data::dependency::{Dependency, AdditionalDependencyData};
 use crate::data::shared_dependency::{SharedDependency};
-use crate::data::shared_package::{SharedPackageConfig};
+use crate::data::shared_package::SharedPackageConfig;
 use std::collections::HashMap;
 use semver::{Version};
 use colored::*;
-use std::io::{Write, Read};
+
+use std::io::BufReader;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -59,20 +60,18 @@ pub struct PackageConfig {
 impl PackageConfig {
     pub fn write(&self)
     {
-        let qpm_package = serde_json::to_string_pretty(&self).expect("Serialization failed");
-
-        let mut file = std::fs::File::create("qpm.json").expect("create failed");
-        file.write_all(qpm_package.as_bytes()).expect("write failed");
+        let file = std::fs::File::create("qpm.json").expect("create failed");
+        serde_json::to_writer_pretty(file, &self).expect("Serialization failed");
         println!("Package {} Written!", self.info.id);
     }
 
     pub fn read() -> PackageConfig 
     {
-        let mut file = std::fs::File::open("qpm.json").expect("Opening qpm.json failed");
-        let mut qpm_package = String::new();
-        file.read_to_string(&mut qpm_package).expect("Reading data failed");
+        let file = std::fs::File::open("qpm.json").expect("Opening qpm.json failed");
+        // Open the file in read-only mode with buffer.
+        let reader = BufReader::new(file);
 
-        serde_json::from_str::<PackageConfig>(&qpm_package).expect("Deserializing package failed")
+        serde_json::from_reader::<_, PackageConfig>(reader).expect("Deserializing package failed")
     }
 
     pub fn add_dependency(&mut self, dependency: Dependency)
@@ -130,10 +129,13 @@ impl PackageConfig {
     {
         // collect our dependencies first
         let mut collapsed = self.collect();
-        let collapsed_clone = collapsed.clone();
 
-        collapsed.retain(|shared_dependency, _shared_package|{
-            for pair in collapsed_clone.iter() {
+        // TODO: Remove this if possible?
+        let collected = collapsed.clone();
+
+        (&mut collapsed).retain(|shared_dependency, _shared_package|{
+
+            for pair in (&collected).iter() {
                 if pair.0.dependency.id.eq(&shared_dependency.dependency.id) && pair.0.get_hash() != shared_dependency.get_hash() {
                     let req1 = cursed_semver_parser::parse(&pair.0.dependency.version_range).expect("Parsing first version range failed");
                     let req2 = cursed_semver_parser::parse(&shared_dependency.dependency.version_range).expect("Parsing second version range failed");
