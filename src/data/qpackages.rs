@@ -1,10 +1,10 @@
-use std::{collections::HashMap, io::Cursor, lazy::SyncLazy as Lazy, time::Duration};
+use std::{collections::HashMap, lazy::SyncLazy as Lazy};
 
 use atomic_refcell::AtomicRefCell;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 
-use crate::data::{config::Config, package::SharedPackageConfig};
+use crate::{data::{package::SharedPackageConfig}, utils::network::get_agent};
 static API_URL: &str = "https://qpackages.com";
 static AUTH_HEADER: &str = "not that i can come up with";
 
@@ -13,23 +13,7 @@ static VERSIONS_CACHE: Lazy<AtomicRefCell<HashMap<String, Vec<PackageVersion>>>>
 static SHARED_PACKAGE_CACHE: Lazy<AtomicRefCell<HashMap<String, SharedPackageConfig>>> =
     Lazy::new(Default::default);
 
-static AGENT: Lazy<AtomicRefCell<ureq::Agent>> = Lazy::new({
-    || {
-        AtomicRefCell::new(
-            ureq::AgentBuilder::new()
-                .timeout_read(Duration::from_millis(
-                    Config::read_combine().timeout.unwrap(),
-                ))
-                .timeout_write(Duration::from_millis(
-                    Config::read_combine().timeout.unwrap(),
-                ))
-                .user_agent(
-                    format!("questpackagemanager-rust/{}", env!("CARGO_PKG_VERSION")).as_str(),
-                )
-                .build(),
-        )
-    }
-});
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, Hash, PartialEq, Eq)]
 #[allow(non_snake_case)]
@@ -47,13 +31,13 @@ pub fn get_versions(id: &str) -> Vec<PackageVersion> {
         return entry.clone();
     }
 
-    let versions = AGENT
-        .borrow_mut()
+    let versions: Vec<PackageVersion> = get_agent()
         .get(&url)
-        .call()
+        .send()
         .expect("Request to qpackages.com failed")
-        .into_json::<Vec<PackageVersion>>()
+        .json()
         .expect("Into json failed");
+        
 
     VERSIONS_CACHE.borrow_mut().insert(url, versions.clone());
     versions
@@ -66,12 +50,11 @@ pub fn get_shared_package(id: &str, ver: &Version) -> SharedPackageConfig {
         return entry.clone();
     }
 
-    let shared_package = AGENT
-        .borrow_mut()
+    let shared_package: SharedPackageConfig = get_agent()
         .get(&url)
-        .call()
+        .send()
         .expect("Request to qpackages.com failed")
-        .into_json::<SharedPackageConfig>()
+        .json()
         .expect("Into json failed");
 
     SHARED_PACKAGE_CACHE
@@ -81,12 +64,11 @@ pub fn get_shared_package(id: &str, ver: &Version) -> SharedPackageConfig {
 }
 
 pub fn get_packages() -> Vec<String> {
-    AGENT
-        .borrow_mut()
+    get_agent()
         .get(API_URL)
-        .call()
+        .send()
         .expect("Request to qpackages.com failed")
-        .into_json::<Vec<String>>()
+        .json()
         .expect("Into json failed")
 }
 
@@ -96,12 +78,10 @@ pub fn publish_package(package: &SharedPackageConfig) {
         API_URL, &package.config.info.id, &package.config.info.version
     );
 
-    let s = serde_json::to_string_pretty(&package).expect("json failed");
-    let read = Cursor::new(s.into_bytes());
-    AGENT
-        .borrow_mut()
+    get_agent()
         .post(&url)
-        .set("Authorization", AUTH_HEADER)
-        .send(read)
+        .header("Authorization", AUTH_HEADER)
+        .json(&package)
+        .send()
         .expect("Request to qpackages.com failed");
 }
