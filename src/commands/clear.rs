@@ -27,7 +27,7 @@ pub fn remove_dependencies_dir() {
     {
         panic!(
             "Current path {:?} would be deleted since extern path {:?} is an ancestor or empty",
-            current_path, extern_path
+            current_path.canonicalize().bright_yellow(), extern_path.bright_red()
         );
     }
 
