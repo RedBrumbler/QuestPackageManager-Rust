@@ -29,7 +29,7 @@ pub fn resolve(root: &PackageConfig) -> impl Iterator<Item = SharedPackageConfig
         Ok(deps) => deps
             .into_iter()
             .filter_map(move |(id, version)| {
-                if !(id == root.info.id && version == root.info.version) {
+                if id == root.info.id && version == root.info.version {
                     return None;
                 }
         
