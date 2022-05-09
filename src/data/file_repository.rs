@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use super::package::SharedPackageConfig;
 use crate::data::{config::Config, package::PackageConfig};
 
+// TODO: Somehow make a global singleton of sorts/cached instance to share across places
+// like resolver
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileRepository {
     pub artifacts: HashMap<String, HashMap<Version, SharedPackageConfig>>,

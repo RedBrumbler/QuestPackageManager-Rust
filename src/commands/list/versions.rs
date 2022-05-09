@@ -15,19 +15,20 @@ pub fn execute_versions_list(package: Package) {
             "The latest version for package {} is {}",
             package.package.bright_red(),
             versions
+                .expect("Getting version failed!")
                 .get(0)
                 .expect("Getting first version failed!")
                 .version
                 .to_string()
                 .bright_green()
         );
-    } else if !versions.is_empty() {
+    } else if versions.is_some() {
         println!(
             "Package {} has {} versions on qpackages.com:",
             package.package.bright_red(),
-            versions.len().bright_yellow()
+            versions.unwrap().len().bright_yellow()
         );
-        for package_version in versions.iter().rev() {
+        for package_version in versions.unwrap().iter().rev() {
             println!(" - {}", package_version.version.to_string().bright_green());
         }
     } else {

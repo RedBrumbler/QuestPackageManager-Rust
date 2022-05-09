@@ -97,7 +97,7 @@ impl SharedPackageConfig {
 
         let mut any = false;
         for shared_dep in self.restored_dependencies.iter() {
-            let shared_package = shared_dep.get_shared_package();
+            let shared_package = shared_dep.get_shared_package().expect("Unable to get shared package");
             let package_id = shared_package.config.info.id;
 
             if let Some(compile_options) =

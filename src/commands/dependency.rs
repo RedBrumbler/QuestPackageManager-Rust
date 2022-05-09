@@ -51,7 +51,7 @@ fn add_dependency(dependency_args: DependencyOperationAddArgs) {
         return;
     }
 
-    let versions = crate::data::qpackages::get_versions(&dependency_args.id);
+    let versions = crate::data::qpackages::get_versions(&dependency_args.id).expect("No version found for dependency");
 
     if versions.is_empty() {
         println!(

@@ -28,7 +28,7 @@ pub struct SharedDependency {
 }
 
 impl SharedDependency {
-    pub fn get_shared_package(&self) -> SharedPackageConfig {
+    pub fn get_shared_package(&self) -> Option<SharedPackageConfig> {
         qpackages::get_shared_package(&self.dependency.id, &self.version)
     }
 
@@ -82,7 +82,7 @@ impl SharedDependency {
         let lib_path = base_path.join("lib");
         let tmp_path = base_path.join("tmp");
 
-        let shared_package = self.get_shared_package();
+        let shared_package = self.get_shared_package().expect("Unable to get shared package");
 
         let so_path = lib_path.join(shared_package.config.get_so_name());
         let debug_so_path = lib_path.join(format!("debug_{}", shared_package.config.get_so_name()));
@@ -229,7 +229,7 @@ impl SharedDependency {
         // low priority since this also works
         let config = Config::read_combine();
         let package = PackageConfig::read();
-        let shared_package = self.get_shared_package();
+        let shared_package = self.get_shared_package().expect("Unable to get shared package");
 
         let base_path = config
             .cache

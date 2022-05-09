@@ -3,6 +3,7 @@ use std::{collections::HashMap, io::Cursor, lazy::SyncLazy as Lazy, time::Durati
 use atomic_refcell::AtomicRefCell;
 use semver::Version;
 use serde::{Deserialize, Serialize};
+use ureq::Response;
 
 use crate::data::{config::Config, package::SharedPackageConfig};
 static API_URL: &str = "https://qpackages.com";
@@ -34,42 +35,68 @@ static AGENT: Lazy<AtomicRefCell<ureq::Agent>> = Lazy::new({
 #[derive(Serialize, Deserialize, Clone, Debug, Hash, PartialEq, Eq)]
 #[allow(non_snake_case)]
 #[serde(rename_all = "camelCase")]
-pub struct  PackageVersion {
+pub struct PackageVersion {
     pub id: String,
     pub version: Version,
 }
 
+// true if 404
+fn is_404_or_panic(res: &Result<Response, ureq::Error>) -> bool {
+    if let Err(e) = res {
+        match e {
+            ureq::Error::Status(code, res) => {
+                if *code == 404u16 {
+                    return true;
+                }
+
+                panic!("Received error code {:?} with response {:?}", code, &res)
+            }
+            _ => panic!("Unable to send request {}", dbg!(&e)),
+        }
+    }
+
+    false
+}
+
 /// Requests the appriopriate package info from qpackage.com
-pub fn get_versions(id: &str) -> Vec<PackageVersion> {
+pub fn get_versions(id: &str) -> Option<Vec<PackageVersion>> {
     let url = format!("{}/{}?limit=0", API_URL, id);
 
     if let Some(entry) = VERSIONS_CACHE.borrow().get(&url) {
-        return entry.clone();
+        return Some(entry.clone());
     }
 
-    let versions = AGENT
-        .borrow_mut()
-        .get(&url)
-        .call()
+    let response = AGENT.borrow_mut().get(&url).call();
+
+    if is_404_or_panic(&response) {
+        return None;
+    };
+
+    let versions = response
         .expect("Request to qpackages.com failed")
         .into_json::<Vec<PackageVersion>>()
         .expect("Into json failed");
 
     VERSIONS_CACHE.borrow_mut().insert(url, versions.clone());
-    versions
+
+
+    Some(versions)
 }
 
-pub fn get_shared_package(id: &str, ver: &Version) -> SharedPackageConfig {
+pub fn get_shared_package(id: &str, ver: &Version) -> Option<SharedPackageConfig> {
     let url = format!("{}/{}/{}", API_URL, id, ver);
 
     if let Some(entry) = SHARED_PACKAGE_CACHE.borrow().get(&url) {
-        return entry.clone();
+        return Some(entry.clone());
     }
 
-    let shared_package = AGENT
-        .borrow_mut()
-        .get(&url)
-        .call()
+    let response = AGENT.borrow_mut().get(&url).call();
+
+    if is_404_or_panic(&response) {
+        return None;
+    };
+
+    let shared_package = response
         .expect("Request to qpackages.com failed")
         .into_json::<SharedPackageConfig>()
         .expect("Into json failed");
@@ -77,7 +104,7 @@ pub fn get_shared_package(id: &str, ver: &Version) -> SharedPackageConfig {
     SHARED_PACKAGE_CACHE
         .borrow_mut()
         .insert(url, shared_package.clone());
-    shared_package
+    Some(shared_package)
 }
 
 pub fn get_packages() -> Vec<String> {
