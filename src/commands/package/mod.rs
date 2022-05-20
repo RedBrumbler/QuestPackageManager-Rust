@@ -1,5 +1,7 @@
 use clap::{Subcommand, Args};
 
+use crate::data::repo::multi_provider::MultiDependencyProvider;
+
 mod create;
 mod edit;
 mod edit_extra;
@@ -25,8 +27,8 @@ pub enum PackageOperation {
 pub fn execute_package_operation(operation: Package) {
     match operation.op {
         PackageOperation::Create(c) => create::package_create_operation(c),
-        PackageOperation::Edit(e) => edit::package_edit_operation(e),
-        PackageOperation::EditExtra(ee) => edit_extra::package_edit_extra_operation(ee),
+        PackageOperation::Edit(e) => edit::package_edit_operation(e, &MultiDependencyProvider::useful_default_new()),
+        PackageOperation::EditExtra(ee) => edit_extra::package_edit_extra_operation(ee, &MultiDependencyProvider::useful_default_new()),
     }
 }
 

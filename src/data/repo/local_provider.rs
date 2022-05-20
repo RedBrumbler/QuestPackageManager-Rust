@@ -1,7 +1,9 @@
 use semver::Version;
 
-use super::provider::DependencyRepository;
+
 use crate::data::{file_repository::FileRepository, qpackages::PackageVersion};
+
+use super::DependencyRepository;
 
 impl DependencyRepository for FileRepository {
     fn get_versions(&self, id: &str) -> Option<Vec<crate::data::qpackages::PackageVersion>> {

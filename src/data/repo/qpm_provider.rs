@@ -2,7 +2,9 @@ use semver::Version;
 
 use crate::data::qpackages;
 
-use super::{provider::DependencyRepository};
+use super::DependencyRepository;
+
+
 
 pub struct QPMRepository {}
 

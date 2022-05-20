@@ -35,7 +35,7 @@ pub fn check_git() {
     }
 }
 
-pub fn get_release(url: String, out: &std::path::Path) -> bool {
+pub fn get_release(url: &str, out: &std::path::Path) -> bool {
     check_git();
     if let Ok(token_unwrapped) = get_keyring().get_password() {
         get_release_with_token(url, out, &token_unwrapped)
@@ -44,9 +44,9 @@ pub fn get_release(url: String, out: &std::path::Path) -> bool {
     }
 }
 
-pub fn get_release_without_token(url: String, out: &std::path::Path) -> bool {
+pub fn get_release_without_token(url: &str, out: &std::path::Path) -> bool {
     let mut buffer = Cursor::new(Vec::new());
-    ureq::get(&url)
+    ureq::get(url)
         .call()
         .unwrap()
         .into_reader()
@@ -59,7 +59,7 @@ pub fn get_release_without_token(url: String, out: &std::path::Path) -> bool {
     out.exists()
 }
 
-pub fn get_release_with_token(url: String, out: &std::path::Path, token: &str) -> bool {
+pub fn get_release_with_token(url: &str, out: &std::path::Path, token: &str) -> bool {
     // had token, use it!
     // download url for a private thing: still need to get asset id!
     // from this: "https://github.com/$USER/$REPO/releases/download/$TAG/$FILENAME"
@@ -111,7 +111,7 @@ pub fn get_release_with_token(url: String, out: &std::path::Path, token: &str) -
     out.exists()
 }
 
-pub fn clone(mut url: String, branch: Option<String>, out: &std::path::Path) -> bool {
+pub fn clone(mut url: String, branch: Option<&String>, out: &std::path::Path) -> bool {
     check_git();
     if let Ok(token_unwrapped) = get_keyring().get_password() {
         if let Some(gitidx) = url.find("github.com") {

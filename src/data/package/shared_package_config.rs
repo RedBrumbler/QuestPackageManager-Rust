@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::qpackages;
+use crate::data::{qpackages, repo::DependencyRepository};
 /// Fern: Adds line ending after each element
 /// thanks raft
 macro_rules! concatln {
@@ -68,24 +68,27 @@ impl SharedPackageConfig {
         shared_package
     }
 
-    pub fn restore(&self) {
+    pub fn restore(&self, repo: &impl DependencyRepository) {
         // TODO: Support restoring file repository dependencies
         for to_restore in self.restored_dependencies.iter() {
             // if the shared dep is contained within the direct dependencies, link against that, always copy headers!
-            to_restore.cache();
+            let shared_package = repo.get_shared_package_from_dependency(to_restore).unwrap_or_else(|| panic!("Could not find package {}", to_restore.dependency.id));
+
+            to_restore.cache(&shared_package);
             to_restore.restore_from_cache(
                 self.config
                     .dependencies
                     .iter()
                     .any(|dep| dep.id == to_restore.dependency.id),
+                    &shared_package
             );
         }
 
-        self.write_extern_cmake();
+        self.write_extern_cmake(repo);
         self.write_define_cmake();
     }
 
-    pub fn write_extern_cmake(&self) {
+    pub fn write_extern_cmake(&self, repo: &impl DependencyRepository) {
         let mut extern_cmake_file =
             std::fs::File::create("extern.cmake").expect("Failed to create extern cmake file");
         let mut result = concatln!(
@@ -96,9 +99,11 @@ impl SharedPackageConfig {
             "\n# includes and compile options added by other libraries\n"
         ).to_string();
 
+        
+
         let mut any = false;
         for shared_dep in self.restored_dependencies.iter() {
-            let shared_package = shared_dep.get_shared_package().expect("Unable to get shared package");
+            let shared_package = repo.get_shared_package_from_dependency(shared_dep).expect("Unable to get shared package");
             let package_id = shared_package.config.info.id;
 
             if let Some(compile_options) =
