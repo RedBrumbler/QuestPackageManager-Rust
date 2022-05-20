@@ -69,6 +69,7 @@ impl SharedPackageConfig {
     }
 
     pub fn restore(&self) {
+        // TODO: Support restoring file repository dependencies
         for to_restore in self.restored_dependencies.iter() {
             // if the shared dep is contained within the direct dependencies, link against that, always copy headers!
             to_restore.cache();

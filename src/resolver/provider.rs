@@ -46,10 +46,6 @@ impl DependencyRepository for DependencyProvider<'_> {
             .unique()
             .collect();
 
-        if result.is_empty() {
-            return None;
-        }
-
         // we add ourselves to the gotten versions, so the local version always can be resolved as most ideal
         if *id == self.root.info.id {
             result.push(qpackages::PackageVersion {
@@ -57,6 +53,11 @@ impl DependencyRepository for DependencyProvider<'_> {
                 version: self.root.info.version.clone(),
             });
         }
+
+        if result.is_empty() {
+            return None;
+        }
+
 
         Some(result)
     }

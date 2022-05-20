@@ -1,9 +1,12 @@
 use std::{
     collections::HashMap,
+    fs,
     io::{Read, Write},
+    lazy::{Lazy, OnceCell, SyncOnceCell},
     path::PathBuf,
 };
 
+use fs_extra::{dir::copy as copy_directory, file::copy as copy_file};
 use owo_colors::OwoColorize;
 use remove_dir_all::remove_dir_all;
 use semver::Version;
@@ -47,10 +50,36 @@ impl FileRepository {
 
         Self::add_to_cache(&package, project_folder, binary_path);
 
-
         let id_artifacts = self.artifacts.get_mut(&package.config.info.id).unwrap();
 
         id_artifacts.insert(package.config.info.version.clone(), package);
+    }
+
+    fn copy_to_cache(a: &PathBuf, b: &PathBuf) {
+        if a.is_dir() {
+            fs::create_dir_all(&b)
+                .unwrap_or_else(|e| panic!("Failed to create {b:?} path. Cause {e:?}"));
+        } else {
+            let parent = b.parent().unwrap();
+            fs::create_dir_all(parent)
+                .unwrap_or_else(|e| panic!("Failed to create {parent:?} path. Cause {e:?}"));
+        }
+
+        let result = if a.is_dir() {
+            let mut options = fs_extra::dir::CopyOptions::new();
+            options.overwrite = true;
+            options.copy_inside = true;
+            options.content_only = true;
+            // copy it over
+            copy_directory(a, b, &options)
+        } else {
+            // if it's a file, copy that over instead
+            let mut options = fs_extra::file::CopyOptions::new();
+            options.overwrite = true;
+            copy_file(a, b, &options)
+        };
+
+        result.unwrap_or_else(|e| panic!("Unable to copy from {:?} to {:?}. Cause {e:?}", a, b));
     }
 
     fn add_to_cache(
@@ -88,21 +117,19 @@ impl FileRepository {
             remove_dir_all(&src_path).expect("Failed to remove existing src folder");
         }
 
-        std::fs::create_dir_all(&src_path.parent().unwrap()).expect("Failed to create lib path");
+        fs::create_dir_all(&src_path).expect("Failed to create lib path");
 
         let original_shared_path = project_folder.join(&package.config.shared_dir);
         let original_package_file_path = project_folder.join("qpm.json");
 
-        std::fs::copy(&original_shared_path, &src_path.join(&package.config.shared_dir)).unwrap_or_else(|_| panic!("Unable to copy from {:?} to {:?}",
-                original_shared_path,
-                src_path.join(&package.config.shared_dir)));
-        std::fs::copy(&original_package_file_path, &src_path.join("qpm.json")).unwrap_or_else(|_| panic!("Unable to copy from {:?} to {:?}",
-                &original_package_file_path,
-                src_path.join("qpm.json")));
+        Self::copy_to_cache(
+            &original_shared_path,
+            &src_path.join(&package.config.shared_dir),
+        );
+        Self::copy_to_cache(&original_package_file_path, &src_path.join("qpm.json"));
 
         if let Some(binary_path_unwrapped) = &binary_path {
-            std::fs::copy(binary_path_unwrapped, &so_path).unwrap_or_else(|_| panic!("Unable to copy from {:?} to {:?}",
-                    binary_path_unwrapped, so_path));
+            Self::copy_to_cache(binary_path_unwrapped, &so_path);
         }
 
         let package_path = src_path.join("qpm.json");
@@ -148,7 +175,7 @@ impl FileRepository {
             .expect("Failed to make config folder");
         let mut file = std::fs::File::create(path).expect("create failed");
         file.write_all(config.as_bytes()).expect("write failed");
-        println!("Saved Config!");
+        println!("Saved local repository Config!");
     }
 
     pub fn global_file_repository_path() -> PathBuf {

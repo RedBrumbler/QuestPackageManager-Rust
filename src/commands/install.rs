@@ -17,7 +17,7 @@ pub struct InstallOperation {
 }
 
 pub fn execute_install_operation(install: InstallOperation) {
-    println!("package should be restoring");
+    println!("Publishing package to local file repository");
     let package = PackageConfig::read();
     let shared_package = SharedPackageConfig::from_package(&package);
 
@@ -36,6 +36,7 @@ pub fn execute_install_operation(install: InstallOperation) {
 
     shared_package.write();
 
-    FileRepository::read().add_artifact(shared_package, PathBuf::from(".").canonicalize().expect("Unable to canocalize path"), install.binary_path)
-
+    let mut repo = FileRepository::read();
+    repo.add_artifact(shared_package, PathBuf::from(".").canonicalize().expect("Unable to canocalize path"), install.binary_path);
+    repo.write();
 }
