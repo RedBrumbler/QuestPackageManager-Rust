@@ -10,8 +10,10 @@ use crate::data::{
 
 #[derive(Args, Debug, Clone)]
 pub struct InstallOperation {
-    pub binary_path: Option<PathBuf>
+    pub binary_path: Option<PathBuf>,
 
+    #[clap(long, short)]
+    pub cmake_build: Option<bool>
     // pub additional_folders: Vec<String> // todo
 
 }
@@ -36,7 +38,13 @@ pub fn execute_install_operation(install: InstallOperation) {
 
     shared_package.write();
 
+    let mut binary_path = install.binary_path;
+
+    if binary_path.is_none() && install.cmake_build.unwrap_or(true) {
+        binary_path = Some(PathBuf::from(format!("./build/{}", shared_package.config.get_so_name())).canonicalize().unwrap());
+    }
+
     let mut repo = FileRepository::read();
-    repo.add_artifact(shared_package, PathBuf::from(".").canonicalize().expect("Unable to canocalize path"), install.binary_path);
+    repo.add_artifact(shared_package, PathBuf::from(".").canonicalize().expect("Unable to canocalize path"), binary_path);
     repo.write();
 }
