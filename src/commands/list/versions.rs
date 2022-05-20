@@ -22,13 +22,13 @@ pub fn execute_versions_list(package: Package) {
                 .to_string()
                 .bright_green()
         );
-    } else if versions.is_some() {
+    } else if let Some(package_versions) = &versions {
         println!(
             "Package {} has {} versions on qpackages.com:",
             package.package.bright_red(),
-            versions.unwrap().len().bright_yellow()
+            versions.as_ref().unwrap().len().bright_yellow()
         );
-        for package_version in versions.unwrap().iter().rev() {
+        for package_version in package_versions.iter().rev() {
             println!(" - {}", package_version.version.to_string().bright_green());
         }
     } else {

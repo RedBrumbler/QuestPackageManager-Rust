@@ -42,7 +42,7 @@ enum MainCommand {
     /// Qmod control
     Qmod(commands::qmod::Qmod),
     /// Install to local repository
-    Install
+    Install(commands::install::InstallOperation)
 }
 
 fn main() {
@@ -59,7 +59,7 @@ fn main() {
         MainCommand::Publish => commands::publish::execute_publish_operation(),
         MainCommand::Restore => commands::restore::execute_restore_operation(),
         MainCommand::Qmod(q) => commands::qmod::execute_qmod_operation(q),
-        MainCommand::Install => commands::install::execute_install_operation(),
+        MainCommand::Install(i) => commands::install::execute_install_operation(i),
     }
 }
 

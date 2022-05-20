@@ -6,7 +6,7 @@ use semver::{Comparator, Op, Prerelease, VersionReq};
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct Version(semver::Version);
 
-pub(super) fn req_to_range(req: &VersionReq) -> Range<Version> {
+pub(super) fn req_to_range(req: VersionReq) -> Range<Version> {
     let mut range = Range::any();
     for comparator in req.comparators {
         let next = match comparator {

@@ -13,11 +13,11 @@ impl QPMRepository {
 }
 
 impl DependencyRepository for QPMRepository {
-    fn get_versions(&self, id: &String) -> Option<Vec<crate::data::qpackages::PackageVersion>> {
+    fn get_versions(&self, id: &str) -> Option<Vec<crate::data::qpackages::PackageVersion>> {
         qpackages::get_versions(id)
     }
 
-    fn get_shared_package(&self, id: &String, version: &Version) -> Option<crate::data::package::SharedPackageConfig> {
+    fn get_shared_package(&self, id: &str, version: &Version) -> Option<crate::data::package::SharedPackageConfig> {
         qpackages::get_shared_package(id, version)
     }
 }

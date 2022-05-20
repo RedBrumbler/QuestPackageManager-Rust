@@ -10,10 +10,10 @@ use crate::data::{
 };
 
 pub trait DependencyRepository {
-    fn get_versions(&self, id: &String) -> Option<Vec<PackageVersion>>;
+    fn get_versions(&self, id: &str) -> Option<Vec<PackageVersion>>;
     fn get_shared_package(
         &self,
-        id: &String,
+        id: &str,
         version: &semver::Version,
     ) -> Option<SharedPackageConfig>;
 }
@@ -36,13 +36,13 @@ impl<'a> DependencyProvider<'a> {
 /// 
 impl DependencyRepository for DependencyProvider<'_> {
     // get versions of all repositories
-    fn get_versions(&self, id: &String) -> Option<Vec<PackageVersion>> {
+    fn get_versions(&self, id: &str) -> Option<Vec<PackageVersion>> {
         // double flat map???? rust weird
         let mut result: Vec<PackageVersion> = self
             .repositories
             .iter()
             .flat_map(|r| r.get_versions(id))
-            .flat_map(|f| f)
+            .flatten()
             .unique()
             .collect();
 
@@ -64,7 +64,7 @@ impl DependencyRepository for DependencyProvider<'_> {
     // get package from the first repository that has it
     fn get_shared_package(
         &self,
-        id: &String,
+        id: &str,
         version: &semver::Version,
     ) -> Option<SharedPackageConfig> {
         self.repositories
@@ -80,9 +80,9 @@ impl pubgrub::solver::DependencyProvider<String, Version> for DependencyProvider
     ) -> Result<(T, Option<Version>), Box<dyn std::error::Error>> {
         Ok(pubgrub::solver::choose_package_with_fewest_versions(
             |id| {
-                self.get_versions(&id)
+                self.get_versions(id)
                     // TODO: Anyhow
-                    .expect(format!("Unable to find versions for package {id}").as_str())
+                    .unwrap_or_else(|| panic!("Unable to find versions for package {id}"))
                     .into_iter()
                     .map(|pv: qpackages::PackageVersion| pv.version.into())
             },
@@ -101,16 +101,16 @@ impl pubgrub::solver::DependencyProvider<String, Version> for DependencyProvider
                 .dependencies
                 .iter()
                 .map(|dep| {
-                    let id = dep.id;
-                    let version = req_to_range(&dep.version_range);
-                    (id, version)
+                    let id = &dep.id;
+                    let version = req_to_range(dep.version_range.clone());
+                    (id.clone(), version)
                 })
                 .collect();
             Ok(Dependencies::Known(deps))
         } else {
             let mut package = self
                 .get_shared_package(id, &version.clone().into())
-                .expect(format!("Could not find package {id} with version {version}").as_str());
+                .unwrap_or_else(|| panic!("Could not find package {id} with version {version}"));
             // remove any private dependencies
             package
                 .config
@@ -123,7 +123,7 @@ impl pubgrub::solver::DependencyProvider<String, Version> for DependencyProvider
                 .into_iter()
                 .map(|dep| {
                     let id = dep.id;
-                    let version = req_to_range(&dep.version_range);
+                    let version = req_to_range(dep.version_range);
                     (id, version)
                 })
                 .collect();
