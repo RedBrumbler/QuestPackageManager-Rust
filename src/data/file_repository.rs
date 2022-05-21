@@ -41,13 +41,14 @@ impl FileRepository {
         package: SharedPackageConfig,
         project_folder: PathBuf,
         binary_path: Option<PathBuf>,
+        debug_binary_path: Option<PathBuf>
     ) {
         if !self.artifacts.contains_key(&package.config.info.id) {
             self.artifacts
                 .insert(package.config.info.id.clone(), HashMap::new());
         }
 
-        Self::add_to_cache(&package, project_folder, binary_path);
+        Self::add_to_cache(&package, project_folder, binary_path, debug_binary_path);
 
         let id_artifacts = self.artifacts.get_mut(&package.config.info.id).unwrap();
 
@@ -85,6 +86,7 @@ impl FileRepository {
         package: &SharedPackageConfig,
         project_folder: PathBuf,
         binary_path: Option<PathBuf>,
+        debug_binary_path: Option<PathBuf>
     ) {
         println!(
             "Adding cache for local dependency {} {}",
@@ -129,6 +131,10 @@ impl FileRepository {
 
         if let Some(binary_path_unwrapped) = &binary_path {
             Self::copy_to_cache(binary_path_unwrapped, &so_path);
+        }
+
+        if let Some(debug_binary_path_unwrapped) = &debug_binary_path {
+            Self::copy_to_cache(debug_binary_path_unwrapped, &debug_so_path);
         }
 
         let package_path = src_path.join("qpm.json");

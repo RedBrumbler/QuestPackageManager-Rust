@@ -4,18 +4,20 @@ use clap::Args;
 
 use crate::data::{
     config::Config,
-    package::{PackageConfig, SharedPackageConfig}, file_repository::FileRepository,
+    file_repository::FileRepository,
+    package::{PackageConfig, SharedPackageConfig},
 };
-
 
 #[derive(Args, Debug, Clone)]
 pub struct InstallOperation {
     pub binary_path: Option<PathBuf>,
+    pub debug_binary_path: Option<PathBuf>,
 
     #[clap(long, short)]
-    pub cmake_build: Option<bool>
+    pub cmake_build: Option<bool>,
     // pub additional_folders: Vec<String> // todo
-
+    #[clap(long, short)]
+    pub header_only: Option<bool>,
 }
 
 pub fn execute_install_operation(install: InstallOperation) {
@@ -39,12 +41,49 @@ pub fn execute_install_operation(install: InstallOperation) {
     shared_package.write();
 
     let mut binary_path = install.binary_path;
+    let mut debug_binary_path = install.debug_binary_path;
 
-    if binary_path.is_none() && install.cmake_build.unwrap_or(true) {
-        binary_path = Some(PathBuf::from(format!("./build/{}", shared_package.config.get_so_name())).canonicalize().unwrap());
+    if install.header_only.unwrap_or(false) {
+        binary_path = None;
+    } else {
+        if binary_path.is_none() && install.cmake_build.unwrap_or(true) {
+            binary_path = Some(
+                PathBuf::from(format!("./build/{}", shared_package.config.get_so_name()))
+                    .canonicalize()
+                    .unwrap(),
+            );
+        }
+
+        if debug_binary_path.is_none() && install.cmake_build.unwrap_or(true) {
+            binary_path = Some(
+                PathBuf::from(format!(
+                    "./build/debug/{}",
+                    shared_package.config.get_so_name()
+                ))
+                .canonicalize()
+                .unwrap(),
+            );
+        }
     }
 
+    if let Some(p) = &debug_binary_path && !p.exists() {
+        println!("Could not find debug binary {p:?}, skipping")
+    }
+
+
+    if let Some(p) = &binary_path && !p.exists() {
+        println!("Could not find binary {p:?}, skipping")
+    }
+
+
     let mut repo = FileRepository::read();
-    repo.add_artifact(shared_package, PathBuf::from(".").canonicalize().expect("Unable to canocalize path"), binary_path);
+    repo.add_artifact(
+        shared_package,
+        PathBuf::from(".")
+            .canonicalize()
+            .expect("Unable to canocalize path"),
+        binary_path,
+        debug_binary_path,
+    );
     repo.write();
 }
