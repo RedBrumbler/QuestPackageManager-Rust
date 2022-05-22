@@ -16,7 +16,7 @@ pub struct MultiDependencyProvider {
     repositories: Vec<Box<dyn DependencyRepository>>,
 }
 
-impl<'a> MultiDependencyProvider {
+impl MultiDependencyProvider {
     // Repositories sorted in order
     pub fn new( repositories: Vec<Box<dyn DependencyRepository>>) -> Self {
         Self { repositories }

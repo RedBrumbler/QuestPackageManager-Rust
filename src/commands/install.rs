@@ -55,7 +55,7 @@ pub fn execute_install_operation(install: InstallOperation) {
         }
 
         if debug_binary_path.is_none() && install.cmake_build.unwrap_or(true) {
-            binary_path = Some(
+            debug_binary_path = Some(
                 PathBuf::from(format!(
                     "./build/debug/{}",
                     shared_package.config.get_so_name()

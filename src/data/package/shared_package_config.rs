@@ -5,6 +5,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use std::fmt::Write as _;
+
 use crate::data::{qpackages, repo::DependencyRepository};
 /// Fern: Adds line ending after each element
 /// thanks raft
@@ -99,8 +101,6 @@ impl SharedPackageConfig {
             "\n# includes and compile options added by other libraries\n"
         ).to_string();
 
-        
-
         let mut any = false;
         for shared_dep in self.restored_dependencies.iter() {
             let shared_package = repo.get_shared_package_from_dependency(shared_dep).expect("Unable to get shared package");
@@ -114,13 +114,13 @@ impl SharedPackageConfig {
 
                 if let Some(include_dirs) = compile_options.include_paths {
                     for dir in include_dirs.iter() {
-                        result.push_str(&format!("target_include_directories(${{COMPILE_ID}} PRIVATE ${{EXTERN_DIR}}/includes/{}/{})\n", package_id, dir));
+                        writeln!(result, "target_include_directories(${{COMPILE_ID}} PRIVATE ${{EXTERN_DIR}}/includes/{}/{})", package_id, dir).unwrap();
                     }
                 }
 
                 if let Some(system_include_dirs) = compile_options.system_includes {
                     for dir in system_include_dirs.iter() {
-                        result.push_str(&format!("target_include_directories(${{COMPILE_ID}} SYSTEM PRIVATE ${{EXTERN_DIR}}/includes/{}/{})\n", package_id, dir));
+                        writeln!(result, "target_include_directories(${{COMPILE_ID}} SYSTEM PRIVATE ${{EXTERN_DIR}}/includes/{}/{})", package_id, dir).unwrap();
                     }
                 }
 
@@ -131,10 +131,10 @@ impl SharedPackageConfig {
                 }
 
                 for feature in features.iter() {
-                    result.push_str(&format!(
-                        "target_compile_features(${{COMPILE_ID}} PRIVATE {})\n",
+                    writeln!(result, 
+                        "target_compile_features(${{COMPILE_ID}} PRIVATE {})",
                         feature
-                    ));
+                    ).unwrap();
                 }
 
                 let mut flags: Vec<String> = vec![];
@@ -148,10 +148,11 @@ impl SharedPackageConfig {
                 }
 
                 for flag in flags.iter() {
-                    result.push_str(&format!(
-                        "target_compile_options(${{COMPILE_ID}} PRIVATE {})\n",
+                    writeln!(
+                        result,
+                        "target_compile_options(${{COMPILE_ID}} PRIVATE {})",
                         flag
-                    ));
+                    ).unwrap();
                 }
             }
 
@@ -166,10 +167,10 @@ impl SharedPackageConfig {
                         &shared_dep.dependency.id, path_str
                     ));
                     if path.is_file() {
-                        result.push_str(&format!(
+                        write!(result, 
                             "add_library(${{COMPILE_ID}} SHARED ${{EXTERN_DIR}}/{})",
                             extern_path.display()
-                        ));
+                        ).unwrap();
                     } else {
                         let listname = format!(
                             "{}_{}_extra",
@@ -180,27 +181,28 @@ impl SharedPackageConfig {
                             shared_dep.dependency.id.replace('-', "_")
                         );
 
-                        result.push_str(&format!(
-                            "RECURSE_FILES({}_c ${{EXTERN_DIR}}/{}/*.c)\n",
+                        writeln!(result, 
+                            "RECURSE_FILES({}_c ${{EXTERN_DIR}}/{}/*.c)",
                             listname,
                             extern_path.display()
-                        ));
+                        ).unwrap();
 
-                        result.push_str(&format!(
-                            "RECURSE_FILES({}_cpp ${{EXTERN_DIR}}/{}/*.cpp)\n",
+                        writeln!(result, 
+                            "RECURSE_FILES({}_cpp ${{EXTERN_DIR}}/{}/*.cpp)",
                             listname,
                             extern_path.display()
-                        ));
+                        ).unwrap();
 
-                        result.push_str(&format!(
-                            "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_c}})\n",
+                        writeln!(result, 
+                            "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_c}})",
                             listname
-                        ));
+                        ).unwrap();
 
-                        result.push_str(&format!(
-                            "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_cpp}})\n",
+                        writeln!(
+                            result,
+                            "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_cpp}})",
                             listname
-                        ));
+                        ).unwrap();
                     }
                 }
             }
@@ -220,10 +222,10 @@ impl SharedPackageConfig {
                             &shared_dep.dependency.id, path_str
                         ));
                         if path.is_file() {
-                            result.push_str(&format!(
+                            write!(result,
                                 "add_library(${{COMPILE_ID}} SHARED ${{EXTERN_DIR}}/{})",
                                 extern_path.display()
-                            ));
+                            ).unwrap();
                         } else {
                             let listname = format!(
                                 "{}_{}_local_extra",
@@ -234,27 +236,31 @@ impl SharedPackageConfig {
                                 shared_dep.dependency.id.replace('-', "_")
                             );
 
-                            result.push_str(&format!(
-                                "RECURSE_FILES({}_c ${{EXTERN_DIR}}/{}/*.c)\n",
+                            writeln!(
+                                result,
+                                "RECURSE_FILES({}_c ${{EXTERN_DIR}}/{}/*.c)",
                                 listname,
                                 extern_path.display()
-                            ));
+                            ).unwrap();
 
-                            result.push_str(&format!(
-                                "RECURSE_FILES({}_cpp ${{EXTERN_DIR}}/{}/*.cpp)\n",
+                            writeln!(
+                                result,
+                                "RECURSE_FILES({}_cpp ${{EXTERN_DIR}}/{}/*.cpp)",
                                 listname,
                                 extern_path.display()
-                            ));
+                            ).unwrap();
 
-                            result.push_str(&format!(
-                                "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_c}})\n",
+                            writeln!(
+                                result,
+                                "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_c}})",
                                 listname
-                            ));
+                            ).unwrap();
 
-                            result.push_str(&format!(
-                                "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_cpp}})\n",
+                            writeln!(
+                                result,
+                                "target_sources(${{COMPILE_ID}} PRIVATE ${{{}_cpp}})",
                                 listname
-                            ));
+                            ).unwrap();
                         }
                     }
                 }
@@ -297,28 +303,32 @@ impl SharedPackageConfig {
         )
         .to_string();
 
-        result.push_str(&format!(
-            "\nset(MOD_VERSION \"{}\")\n",
+        writeln!(
+            result,
+            "\nset(MOD_VERSION \"{}\")",
             self.config.info.version
-        ));
+        ).unwrap();
         result.push_str("# take the mod name and just remove spaces, that will be MOD_ID, if you don't like it change it after the include of this file\n");
-        result.push_str(&format!(
-            "set(MOD_ID \"{}\")\n\n",
+        writeln!(
+            result,
+            "set(MOD_ID \"{}\")\n",
             self.config.info.name.replace(' ', "")
-        ));
+        ).unwrap();
         result.push_str("# derived from override .so name or just id_version\n");
 
-        result.push_str(&format!(
-            "set(COMPILE_ID \"{}\")\n",
+        writeln!(
+            result,
+            "set(COMPILE_ID \"{}\")",
             self.config.get_module_id()
-        ));
+        ).unwrap();
 
         result.push_str(
             "# derived from whichever codegen package is installed, will default to just codegen\n",
         );
 
-        result.push_str(&format!(
-            "set(CODEGEN_ID \"{}\")\n\n",
+        writeln!(
+            result,
+            "set(CODEGEN_ID \"{}\")\n",
             if let Some(codegen_dep) = self
                 .restored_dependencies
                 .iter()
@@ -329,18 +339,20 @@ impl SharedPackageConfig {
             } else {
                 "codegen"
             }
-        ));
+        ).unwrap();
 
         result.push_str("# given from qpm, automatically updated from qpm.json\n");
 
-        result.push_str(&format!(
-            "set(EXTERN_DIR_NAME \"{}\")\n",
+        writeln!(
+            result,
+            "set(EXTERN_DIR_NAME \"{}\")",
             self.config.dependencies_dir.display()
-        ));
-        result.push_str(&format!(
-            "set(SHARED_DIR_NAME \"{}\")\n\n",
+        ).unwrap();
+        writeln!(
+            result,
+            "set(SHARED_DIR_NAME \"{}\")\n",
             self.config.shared_dir.display()
-        ));
+        ).unwrap();
 
         result.push_str(concatln!(
             "# if no target given, use Debug",
