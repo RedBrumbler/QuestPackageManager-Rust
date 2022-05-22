@@ -1,5 +1,5 @@
 use std::{
-    io::{Cursor, Read, Write},
+    io::{Cursor},
     path::{Path, PathBuf},
 };
 
@@ -16,7 +16,7 @@ use crate::{
         config::Config,
         package::{PackageConfig, SharedPackageConfig},
     },
-    utils::git,
+    utils::{git, network::get_agent},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, Hash, Eq, PartialEq)]
@@ -100,13 +100,11 @@ impl SharedDependency {
                 );
             } else {
                 // not a github url, assume it's a zip
-                let mut buffer = Cursor::new(Vec::new());
-                ureq::get(url)
-                    .call()
-                    .unwrap()
-                    .into_reader()
-                    .read_to_end(buffer.get_mut())
+                let response = get_agent().get(url)
+                    .send()
                     .unwrap();
+
+                let buffer = Cursor::new(response.bytes().unwrap());
                 // Extract to tmp folder
                 ZipArchive::new(buffer).unwrap().extract(&tmp_path).unwrap();
             }
@@ -166,16 +164,14 @@ impl SharedDependency {
                         git::get_release(so_link, &so_path);
                     } else {
                         // other dl link, assume it's a raw lib file download
-                        let mut buffer = Cursor::new(Vec::new());
-                        ureq::get(so_link)
-                            .call()
-                            .unwrap()
-                            .into_reader()
-                            .read_to_end(buffer.get_mut())
-                            .unwrap();
                         let mut file =
                             std::fs::File::create(so_path).expect("create so file failed");
-                        file.write_all(&*buffer.into_inner())
+
+                        get_agent()
+                            .get(so_link)
+                            .send()
+                            .unwrap()
+                            .copy_to(&mut file)
                             .expect("Failed to write out downloaded bytes");
                     }
                 }
@@ -190,17 +186,15 @@ impl SharedDependency {
                         // github url!
                         git::get_release(debug_so_link, &debug_so_path);
                     } else {
-                        // other dl link, assume it's a raw lib file download
-                        let mut buffer = Cursor::new(Vec::new());
-                        ureq::get(debug_so_link)
-                            .call()
-                            .unwrap()
-                            .into_reader()
-                            .read_to_end(buffer.get_mut())
-                            .unwrap();
                         let mut file =
                             std::fs::File::create(debug_so_path).expect("create so file failed");
-                        file.write_all(&*buffer.into_inner())
+
+                        // other dl link, assume it's a raw lib file download
+                        get_agent()
+                            .get(debug_so_link)
+                            .send()
+                            .unwrap()
+                            .copy_to(&mut file)
                             .expect("Failed to write out downloaded bytes");
                     }
                 }
