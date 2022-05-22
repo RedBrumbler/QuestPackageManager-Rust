@@ -1,10 +1,10 @@
-use std::io::{Cursor, Read, Write};
-
 use owo_colors::OwoColorize;
 //use duct::cmd;
 use serde::{Deserialize, Serialize};
 
 use crate::data::config::get_keyring;
+
+use super::network::get_agent;
 
 pub fn check_git() {
     let mut git = std::process::Command::new("git");
@@ -45,16 +45,12 @@ pub fn get_release(url: String, out: &std::path::Path) -> bool {
 }
 
 pub fn get_release_without_token(url: String, out: &std::path::Path) -> bool {
-    let mut buffer = Cursor::new(Vec::new());
-    ureq::get(&url)
-        .call()
-        .unwrap()
-        .into_reader()
-        .read_to_end(buffer.get_mut())
-        .unwrap();
     let mut file = std::fs::File::create(out).expect("create so file failed");
-    file.write_all(&*buffer.into_inner())
-        .expect("Failed to write out downloaded bytes");
+    get_agent().get(&url)
+        .send()
+        .unwrap()
+        .copy_to(&mut file)
+        .expect("Failed to write to file");
 
     out.exists()
 }
@@ -79,8 +75,8 @@ pub fn get_release_with_token(url: String, out: &std::path::Path, token: &str) -
         &token, &user, &repo, &tag
     );
 
-    let data = match ureq::get(&asset_data_link).call() {
-        Ok(o) => o.into_json::<GithubReleaseData>().unwrap(),
+    let data = match get_agent().get(&asset_data_link).send() {
+        Ok(o) => o.json::<GithubReleaseData>().unwrap(),
         Err(e) => {
             let error_string = e.to_string().replace(&token, "***");
             panic!("{}", error_string);
@@ -90,19 +86,16 @@ pub fn get_release_with_token(url: String, out: &std::path::Path, token: &str) -
     for asset in data.assets.iter() {
         if asset.name.eq(filename) {
             // this is the correct asset!
-            let mut buffer = Cursor::new(Vec::new());
             let download = asset
                 .url
                 .replace("api.github.com", &format!("{}@api.github.com", token));
 
-            ureq::get(&download)
-                .call()
-                .unwrap()
-                .into_reader()
-                .read_to_end(buffer.get_mut())
-                .unwrap();
             let mut file = std::fs::File::create(out).expect("create so file failed");
-            file.write_all(&*buffer.into_inner())
+
+            get_agent().get(&download)
+                .send()
+                .unwrap()
+                .copy_to(&mut file)
                 .expect("Failed to write out downloaded bytes");
             break;
         }

@@ -132,6 +132,6 @@ impl Config {
 }
 
 #[inline]
-pub fn get_keyring() -> keyring::Keyring<'static> {
-    keyring::Keyring::new("qpm", "github")
+pub fn get_keyring() -> keyring::Entry {
+    keyring::Entry::new("qpm", "github")
 }
