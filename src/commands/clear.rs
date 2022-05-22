@@ -14,8 +14,25 @@ pub fn execute_clear_operation() {
 
 pub fn remove_dependencies_dir() {
     let package = PackageConfig::read();
-    if std::path::Path::new(&package.dependencies_dir).exists() {
-        for entry in WalkDir::new(package.dependencies_dir.canonicalize().unwrap()).min_depth(1) {
+    let extern_path = std::path::Path::new(&package.dependencies_dir);
+
+    let current_path = std::path::Path::new("");
+
+    // If extern is "" or ".." etc. or is a path that is an
+    // ancestor of the current directory, fail fast
+    if current_path.canonicalize().unwrap() == extern_path.canonicalize().unwrap()
+        || current_path
+            .ancestors()
+            .any(|path| path.canonicalize().unwrap() == extern_path.canonicalize().unwrap())
+    {
+        panic!(
+            "Current path {:?} would be deleted since extern path {:?} is an ancestor or empty",
+            current_path.canonicalize().bright_yellow(), extern_path.bright_red()
+        );
+    }
+
+    if extern_path.exists() {
+        for entry in WalkDir::new(extern_path.canonicalize().unwrap()).min_depth(1) {
             let path = entry.unwrap().into_path();
             #[cfg(debug_assertions)]
             println!("Path: {}", path.display().bright_yellow());
