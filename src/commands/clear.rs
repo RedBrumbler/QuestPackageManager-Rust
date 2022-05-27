@@ -23,13 +23,14 @@ pub fn remove_dependencies_dir() {
     let current_path = std::path::Path::new(".");
 
 
+    let extern_path_canonical = extern_path.canonicalize().expect("Extern path not found");
 
     // If extern is "" or ".." etc. or is a path that is an
     // ancestor of the current directory, fail fast
-    if current_path.canonicalize().expect("No current path found? what?") == extern_path.canonicalize().expect("Extern path not found")
+    if current_path.canonicalize().expect("No current path found? what?") == extern_path_canonical
         || current_path
             .ancestors()
-            .any(|path| path.canonicalize().unwrap() == extern_path.canonicalize().unwrap())
+            .any(|path| path.exists() && path.canonicalize().unwrap_or_else(|e| panic!("Ancestor path {e:?} not found?")) == extern_path_canonical)
     {
         panic!(
             "Current path {:?} would be deleted since extern path {:?} is an ancestor or empty",
@@ -38,7 +39,7 @@ pub fn remove_dependencies_dir() {
     }
 
 
-    for entry in WalkDir::new(extern_path.canonicalize().unwrap()).min_depth(1) {
+    for entry in WalkDir::new(extern_path_canonical).min_depth(1) {
         let path = entry.unwrap().into_path();
         #[cfg(debug_assertions)]
         println!("Path: {}", path.display().bright_yellow());
@@ -81,5 +82,4 @@ pub fn remove_dependencies_dir() {
     }
 
     remove_dir_all(&package.dependencies_dir).expect("Failed to remove cached folders");
-
 }
