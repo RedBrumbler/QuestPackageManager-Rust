@@ -13,10 +13,10 @@ pub struct InstallOperation {
     pub binary_path: Option<PathBuf>,
     pub debug_binary_path: Option<PathBuf>,
 
-    #[clap(long, short)]
+    #[clap(long)]
     pub cmake_build: Option<bool>,
     // pub additional_folders: Vec<String> // todo
-    #[clap(long, short)]
+    #[clap(long)]
     pub header_only: Option<bool>,
 }
 
