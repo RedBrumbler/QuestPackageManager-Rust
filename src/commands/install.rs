@@ -16,8 +16,6 @@ pub struct InstallOperation {
     #[clap(long)]
     pub cmake_build: Option<bool>,
     // pub additional_folders: Vec<String> // todo
-    #[clap(long)]
-    pub header_only: Option<bool>,
 }
 
 pub fn execute_install_operation(install: InstallOperation) {
@@ -43,9 +41,9 @@ pub fn execute_install_operation(install: InstallOperation) {
     let mut binary_path = install.binary_path;
     let mut debug_binary_path = install.debug_binary_path;
 
-    if install.header_only.unwrap_or(false) {
-        binary_path = None;
-    } else {
+    let header_only = package.additional_data.headers_only.unwrap_or(false);
+
+    if !header_only {
         if binary_path.is_none() && install.cmake_build.unwrap_or(true) {
             binary_path = Some(
                 PathBuf::from(format!("./build/{}", shared_package.config.get_so_name()))

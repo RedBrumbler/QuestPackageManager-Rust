@@ -41,7 +41,7 @@ impl FileRepository {
         package: SharedPackageConfig,
         project_folder: PathBuf,
         binary_path: Option<PathBuf>,
-        debug_binary_path: Option<PathBuf>
+        debug_binary_path: Option<PathBuf>,
     ) {
         if !self.artifacts.contains_key(&package.config.info.id) {
             self.artifacts
@@ -86,7 +86,7 @@ impl FileRepository {
         package: &SharedPackageConfig,
         project_folder: PathBuf,
         binary_path: Option<PathBuf>,
-        debug_binary_path: Option<PathBuf>
+        debug_binary_path: Option<PathBuf>,
     ) {
         println!(
             "Adding cache for local dependency {} {}",
@@ -101,11 +101,8 @@ impl FileRepository {
             .join(package.config.info.version.to_string());
 
         let src_path = cache_path.join("src");
-        let lib_path = cache_path.join("lib");
-        let tmp_path = cache_path.join("tmp");
 
-        let so_path = lib_path.join(package.config.get_so_name());
-        let debug_so_path = lib_path.join(format!("debug_{}", package.config.get_so_name()));
+        let tmp_path = cache_path.join("tmp");
 
         // Downloads the repo / zip file into src folder w/ subfolder taken into account
 
@@ -120,6 +117,20 @@ impl FileRepository {
 
         fs::create_dir_all(&src_path).expect("Failed to create lib path");
 
+        if binary_path.is_some() || debug_binary_path.is_some() {
+            let lib_path = cache_path.join("lib");
+            let so_path = lib_path.join(package.config.get_so_name());
+            let debug_so_path = lib_path.join(format!("debug_{}", package.config.get_so_name()));
+
+            if let Some(binary_path_unwrapped) = &binary_path {
+                Self::copy_to_cache(binary_path_unwrapped, &so_path);
+            }
+
+            if let Some(debug_binary_path_unwrapped) = &debug_binary_path {
+                Self::copy_to_cache(debug_binary_path_unwrapped, &debug_so_path);
+            }
+        }
+
         let original_shared_path = project_folder.join(&package.config.shared_dir);
         let original_package_file_path = project_folder.join("qpm.json");
 
@@ -128,14 +139,6 @@ impl FileRepository {
             &src_path.join(&package.config.shared_dir),
         );
         Self::copy_to_cache(&original_package_file_path, &src_path.join("qpm.json"));
-
-        if let Some(binary_path_unwrapped) = &binary_path {
-            Self::copy_to_cache(binary_path_unwrapped, &so_path);
-        }
-
-        if let Some(debug_binary_path_unwrapped) = &debug_binary_path {
-            Self::copy_to_cache(debug_binary_path_unwrapped, &debug_so_path);
-        }
 
         let package_path = src_path.join("qpm.json");
         let downloaded_package = PackageConfig::read_path(package_path);
