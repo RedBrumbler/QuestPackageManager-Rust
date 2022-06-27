@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\qpm-rust-test"
+		}
+	],
+	"settings": {
+		"editor.formatOnPaste": true
+	}
+}

@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand};
 
 use crate::{
-    data::package::{PackageConfig, SharedPackageConfig},
+    data::{package::{PackageConfig, SharedPackageConfig}, repo::DependencyRepository},
     utils::toggle::Toggle,
 };
 
@@ -76,7 +76,7 @@ pub struct CompileOptionsEditArgs {
     pub c_flags: Option<String>,
 }
 
-pub fn package_edit_extra_operation(edit_parameters: EditExtraArgs) {
+pub fn package_edit_extra_operation(edit_parameters: EditExtraArgs, repo: &impl DependencyRepository) {
     let mut package = PackageConfig::read();
     let mut any_changed = false;
     if let Some(branch_name) = edit_parameters.branch_name {
@@ -124,7 +124,7 @@ pub fn package_edit_extra_operation(edit_parameters: EditExtraArgs) {
 
         // HACK: Not sure if this is a proper way of doing this but it seems logical
         shared_package.write_define_cmake();
-        shared_package.write_extern_cmake();
+        shared_package.write_extern_cmake(repo);
     }
 }
 

@@ -15,7 +15,6 @@ use crate::{
     data::{
         config::Config,
         package::{PackageConfig, SharedPackageConfig},
-        qpackages,
     },
     utils::{git, network::get_agent},
 };
@@ -28,10 +27,6 @@ pub struct SharedDependency {
 }
 
 impl SharedDependency {
-    pub fn get_shared_package(&self) -> SharedPackageConfig {
-        qpackages::get_shared_package(&self.dependency.id, &self.version)
-    }
-
     pub fn get_so_name(&self) -> String {
         self.dependency
             .additional_data
@@ -54,7 +49,7 @@ impl SharedDependency {
             ))
     }
 
-    pub fn cache(&self) {
+    pub fn cache(&self, shared_package: &SharedPackageConfig) {
         // Check if already cached
         // if true, don't download repo / header files
         // else cache to tmp folder in package id folder @ cache path
@@ -82,8 +77,6 @@ impl SharedDependency {
         let lib_path = base_path.join("lib");
         let tmp_path = base_path.join("tmp");
 
-        let shared_package = self.get_shared_package();
-
         let so_path = lib_path.join(shared_package.config.get_so_name());
         let debug_so_path = lib_path.join(format!("debug_{}", shared_package.config.get_so_name()));
 
@@ -97,17 +90,17 @@ impl SharedDependency {
             // src did not exist, this means that we need to download the repo/zip file from packageconfig.info.url
             std::fs::create_dir_all(&src_path.parent().unwrap())
                 .expect("Failed to create lib path");
-            let url = shared_package.config.info.url.unwrap();
+            let url = shared_package.config.info.url.as_ref().unwrap();
             if url.contains("github.com") {
                 // github url!
                 git::clone(
-                    url,
-                    shared_package.config.info.additional_data.branch_name,
+                    url.clone(),
+                    shared_package.config.info.additional_data.branch_name.as_ref(),
                     &tmp_path,
                 );
             } else {
                 // not a github url, assume it's a zip
-                let response = get_agent().get(&url)
+                let response = get_agent().get(url)
                     .send()
                     .unwrap();
 
@@ -119,7 +112,7 @@ impl SharedDependency {
             // if you are reading this and think of doing that so I have to fix this, fuck you
 
             let from_path =
-                if let Some(sub_folder) = shared_package.config.info.additional_data.sub_folder {
+                if let Some(sub_folder) = &shared_package.config.info.additional_data.sub_folder {
                     // the package exists in a subfolder of the downloaded thing, just move the subfolder to src
                     tmp_path.join(sub_folder)
                 } else {
@@ -164,7 +157,7 @@ impl SharedDependency {
             std::fs::create_dir_all(&lib_path).expect("Failed to create lib path");
             // libs didn't exist or the release object didn't exist, we need to download from packageconfig.info.additional_data.so_link and packageconfig.info.additional_data.debug_so_link
             if !so_path.exists() {
-                if let Some(so_link) = shared_package.config.info.additional_data.so_link {
+                if let Some(so_link) = &shared_package.config.info.additional_data.so_link {
                     // so_link existed, download
                     if so_link.contains("github.com") {
                         // github url!
@@ -175,7 +168,7 @@ impl SharedDependency {
                             std::fs::File::create(so_path).expect("create so file failed");
 
                         get_agent()
-                            .get(&so_link)
+                            .get(so_link)
                             .send()
                             .unwrap()
                             .copy_to(&mut file)
@@ -186,7 +179,7 @@ impl SharedDependency {
 
             if !debug_so_path.exists() {
                 if let Some(debug_so_link) =
-                    shared_package.config.info.additional_data.debug_so_link
+                    &shared_package.config.info.additional_data.debug_so_link
                 {
                     // debug_so_link existed, download
                     if debug_so_link.contains("github.com") {
@@ -198,7 +191,7 @@ impl SharedDependency {
 
                         // other dl link, assume it's a raw lib file download
                         get_agent()
-                            .get(&debug_so_link)
+                            .get(debug_so_link)
                             .send()
                             .unwrap()
                             .copy_to(&mut file)
@@ -209,21 +202,20 @@ impl SharedDependency {
         }
     }
 
-    pub fn restore_from_cache(&self, also_lib: bool) {
+    pub fn restore_from_cache(&self, also_lib: bool, shared_package: &SharedPackageConfig) {
         // restore from cached files, give error on fail (nonexistent?)
         if Config::read_combine().symlink.unwrap_or(false) {
-            self.restore_from_cache_symlink(also_lib);
+            self.restore_from_cache_symlink(also_lib, shared_package);
         } else {
-            self.restore_from_cache_copy(also_lib);
+            self.restore_from_cache_copy(also_lib, shared_package);
         }
     }
 
-    pub fn collect_to_copy(&self, also_lib: bool) -> Vec<(PathBuf, PathBuf)> {
+    pub fn collect_to_copy(&self, also_lib: bool, shared_package: &SharedPackageConfig) -> Vec<(PathBuf, PathBuf)> {
         // TODO: Look into improving the way it gets all the things to copy
         // low priority since this also works
         let config = Config::read_combine();
         let package = PackageConfig::read();
-        let shared_package = self.get_shared_package();
 
         let base_path = config
             .cache
@@ -253,7 +245,7 @@ impl SharedDependency {
             let prefix = if !use_release { "debug_" } else { "" };
 
             let suffix = if let Some(override_so_name) =
-                shared_package.config.info.additional_data.override_so_name
+                shared_package.config.info.additional_data.override_so_name.clone()
             {
                 override_so_name
             } else {
@@ -334,8 +326,8 @@ impl SharedDependency {
         to_copy
     }
 
-    pub fn restore_from_cache_symlink(&self, also_lib: bool) {
-        let to_copy = self.collect_to_copy(also_lib);
+    pub fn restore_from_cache_symlink(&self, also_lib: bool, shared_package: &SharedPackageConfig) {
+        let to_copy = self.collect_to_copy(also_lib, shared_package);
         // sort out issues with the symlinking, stuff is being symlinked weirdly
         for (from, to) in to_copy.iter() {
             #[cfg(debug_assertions)]
@@ -372,9 +364,9 @@ impl SharedDependency {
         }
     }
 
-    pub fn restore_from_cache_copy(&self, also_lib: bool) {
+    pub fn restore_from_cache_copy(&self, also_lib: bool, shared_package: &SharedPackageConfig) {
         // get the files to copy
-        let to_copy = self.collect_to_copy(also_lib);
+        let to_copy = self.collect_to_copy(also_lib, shared_package);
         for (from_str, to_str) in to_copy.iter() {
             let from = Path::new(&from_str);
             let to = Path::new(&to_str);

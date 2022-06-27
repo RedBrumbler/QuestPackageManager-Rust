@@ -3,41 +3,71 @@ use std::borrow::Borrow;
 use pubgrub::{range::Range, solver::Dependencies};
 
 use super::semver::{req_to_range, Version};
-use crate::data::{package::PackageConfig, qpackages};
+use crate::data::{
+    package::{PackageConfig, SharedPackageConfig},
+    qpackages::{self, PackageVersion},
+    repo::{multi_provider::MultiDependencyProvider, DependencyRepository},
+};
 
-pub struct DependencyProvider<'a> {
+pub struct HackDependencyProvider<'a> {
     root: &'a PackageConfig,
+    repo: MultiDependencyProvider,
 }
 
-impl<'a> DependencyProvider<'a> {
-    pub fn new(root: &'a PackageConfig) -> Self {
-        Self { root }
+impl<'a> HackDependencyProvider<'a> {
+    // Repositories sorted in order
+    pub fn new(root: &'a PackageConfig, repo: MultiDependencyProvider) -> Self {
+        Self { root, repo }
     }
 }
 
-impl DependencyProvider<'_> {
-    fn get_package_versions(&self, id: &str) -> Vec<qpackages::PackageVersion> {
-        let mut result = qpackages::get_versions(id.borrow());
+///
+/// Merge multiple repositories into one
+/// Allow fetching from multiple backends
+///
+impl DependencyRepository for HackDependencyProvider<'_> {
+    // get versions of all repositories
+    fn get_versions(&self, id: &str) -> Option<Vec<PackageVersion>> {
+        // double flat map???? rust weird
+        let mut result = self.repo.get_versions(id);
+
         // we add ourselves to the gotten versions, so the local version always can be resolved as most ideal
-        if id == self.root.info.id {
-            result.push(qpackages::PackageVersion {
-                id: self.root.info.id.clone(),
-                version: self.root.info.version.clone(),
-            });
+        if *id == self.root.info.id {
+            result
+                .get_or_insert(Vec::new())
+                .push(qpackages::PackageVersion {
+                    id: self.root.info.id.clone(),
+                    version: self.root.info.version.clone(),
+                });
+        }
+
+        if result.is_none() || result.as_ref().unwrap().is_empty() {
+            return None;
         }
 
         result
     }
+
+    // get package from the first repository that has it
+    fn get_shared_package(
+        &self,
+        id: &str,
+        version: &semver::Version,
+    ) -> Option<SharedPackageConfig> {
+        self.repo.get_shared_package(id, version)
+    }
 }
 
-impl pubgrub::solver::DependencyProvider<String, Version> for DependencyProvider<'_> {
+impl pubgrub::solver::DependencyProvider<String, Version> for HackDependencyProvider<'_> {
     fn choose_package_version<T: Borrow<String>, U: Borrow<Range<Version>>>(
         &self,
         potential_packages: impl Iterator<Item = (T, U)>,
     ) -> Result<(T, Option<Version>), Box<dyn std::error::Error>> {
         Ok(pubgrub::solver::choose_package_with_fewest_versions(
             |id| {
-                self.get_package_versions(id.borrow())
+                self.get_versions(id)
+                    // TODO: Anyhow
+                    .unwrap_or_else(|| panic!("Unable to find versions for package {id}"))
                     .into_iter()
                     .map(|pv: qpackages::PackageVersion| pv.version.into())
             },
@@ -54,17 +84,18 @@ impl pubgrub::solver::DependencyProvider<String, Version> for DependencyProvider
             let deps = self
                 .root
                 .dependencies
-                .clone()
-                .into_iter()
+                .iter()
                 .map(|dep| {
-                    let id = dep.id;
-                    let version = req_to_range(dep.version_range);
-                    (id, version)
+                    let id = &dep.id;
+                    let version = req_to_range(dep.version_range.clone());
+                    (id.clone(), version)
                 })
                 .collect();
             Ok(Dependencies::Known(deps))
         } else {
-            let mut package = qpackages::get_shared_package(id, &version.clone().into());
+            let mut package = self
+                .get_shared_package(id, &version.clone().into())
+                .unwrap_or_else(|| panic!("Could not find package {id} with version {version}"));
             // remove any private dependencies
             package
                 .config

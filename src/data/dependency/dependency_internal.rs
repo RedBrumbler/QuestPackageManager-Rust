@@ -133,10 +133,10 @@ impl AdditionalDependencyData {
 
 impl Dependency {
     pub fn get_shared_package(&self) -> Option<SharedPackageConfig> {
-        let versions = qpackages::get_versions(&self.id);
+        let versions = qpackages::get_versions(&self.id).expect("Unable to get versions");
         for v in versions.iter() {
             if self.version_range.matches(&v.version) {
-                return Option::Some(qpackages::get_shared_package(&self.id, &v.version));
+                return qpackages::get_shared_package(&self.id, &v.version);
             }
         }
 

@@ -1,7 +1,7 @@
 use clap::{Args};
 use semver::Version;
 
-use crate::data::package::{PackageConfig, SharedPackageConfig};
+use crate::data::{package::{PackageConfig, SharedPackageConfig}, repo::DependencyRepository};
 
 #[derive(Args, Debug, Clone)]
 
@@ -20,7 +20,7 @@ pub struct EditArgs {
     pub version: Option<Version>,
 }
 
-pub fn package_edit_operation(edit_parameters: EditArgs) {
+pub fn package_edit_operation(edit_parameters: EditArgs, repo: &impl DependencyRepository) {
     let mut package = PackageConfig::read();
     let mut any_changed = false;
     if let Some(id) = edit_parameters.id {
@@ -48,7 +48,7 @@ pub fn package_edit_operation(edit_parameters: EditArgs) {
 
         // HACK: Not sure if this is a proper way of doing this but it seems logical
         shared_package.write_define_cmake();
-        shared_package.write_extern_cmake();
+        shared_package.write_extern_cmake(repo);
     }
 }
 

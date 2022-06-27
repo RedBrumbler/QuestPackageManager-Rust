@@ -2,7 +2,7 @@ use std::io::Write;
 
 use crate::data::{
     config::Config,
-    package::{PackageConfig, SharedPackageConfig},
+    package::{PackageConfig, SharedPackageConfig}, repo::multi_provider::MultiDependencyProvider,
 };
 
 pub fn execute_restore_operation() {
@@ -28,5 +28,5 @@ pub fn execute_restore_operation() {
         // HACK: qpm rust is fast enough to where removing the folder and then remaking it is doable
         super::clear::remove_dependencies_dir();
     }
-    shared_package.restore();
+    shared_package.restore(&MultiDependencyProvider::useful_default_new());
 }

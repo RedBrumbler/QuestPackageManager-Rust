@@ -1,4 +1,6 @@
 #![feature(once_cell)]
+#![feature(map_try_insert)]
+#![feature(let_chains)]
 
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
@@ -40,6 +42,8 @@ enum MainCommand {
     Restore,
     /// Qmod control
     Qmod(commands::qmod::Qmod),
+    /// Install to local repository
+    Install(commands::install::InstallOperation)
 }
 
 fn main() {
@@ -56,6 +60,7 @@ fn main() {
         MainCommand::Publish => commands::publish::execute_publish_operation(),
         MainCommand::Restore => commands::restore::execute_restore_operation(),
         MainCommand::Qmod(q) => commands::qmod::execute_qmod_operation(q),
+        MainCommand::Install(i) => commands::install::execute_install_operation(i),
     }
 }
 
