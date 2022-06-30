@@ -56,8 +56,7 @@ impl SharedPackageConfig {
     pub fn from_package(package: &PackageConfig) -> SharedPackageConfig {
         let shared_iter = package.resolve();
 
-        #[allow(unused_mut)]
-        let mut shared_package = SharedPackageConfig {
+        SharedPackageConfig {
             config: package.clone(),
             restored_dependencies: shared_iter
                 // this is not needed right?
@@ -65,9 +64,7 @@ impl SharedPackageConfig {
                 //.iter()
                 .map(|cfg| cfg.into())
                 .collect::<Vec<SharedDependency>>(),
-        };
-
-        shared_package
+        }
     }
 
     pub fn restore(&self, repo: &impl DependencyRepository) {

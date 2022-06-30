@@ -1,4 +1,4 @@
-use std::{collections::HashMap, lazy::SyncLazy as Lazy};
+use std::{collections::HashMap, sync::LazyLock as Lazy};
 
 use atomic_refcell::AtomicRefCell;
 use reqwest::blocking::Response;

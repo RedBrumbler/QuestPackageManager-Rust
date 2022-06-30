@@ -1,5 +1,6 @@
 use std::{
-    io::{Cursor},
+    fs::File,
+    io::Cursor,
     path::{Path, PathBuf},
 };
 
@@ -95,14 +96,17 @@ impl SharedDependency {
                 // github url!
                 git::clone(
                     url.clone(),
-                    shared_package.config.info.additional_data.branch_name.as_ref(),
+                    shared_package
+                        .config
+                        .info
+                        .additional_data
+                        .branch_name
+                        .as_ref(),
                     &tmp_path,
                 );
             } else {
                 // not a github url, assume it's a zip
-                let response = get_agent().get(url)
-                    .send()
-                    .unwrap();
+                let response = get_agent().get(url).send().unwrap();
 
                 let buffer = Cursor::new(response.bytes().unwrap());
                 // Extract to tmp folder
@@ -156,28 +160,30 @@ impl SharedDependency {
         if !lib_path.exists() {
             std::fs::create_dir_all(&lib_path).expect("Failed to create lib path");
             // libs didn't exist or the release object didn't exist, we need to download from packageconfig.info.additional_data.so_link and packageconfig.info.additional_data.debug_so_link
-            if !so_path.exists() {
+            if !so_path.exists() || File::open(&so_path).is_err() {
                 if let Some(so_link) = &shared_package.config.info.additional_data.so_link {
                     // so_link existed, download
                     if so_link.contains("github.com") {
                         // github url!
                         git::get_release(so_link, &so_path);
                     } else {
+                        let mut response = get_agent()
+                            .get(so_link)
+                            .send()
+                            .expect("Unable to download so file");
+
                         // other dl link, assume it's a raw lib file download
                         let mut file =
                             std::fs::File::create(so_path).expect("create so file failed");
 
-                        get_agent()
-                            .get(so_link)
-                            .send()
-                            .unwrap()
+                        response
                             .copy_to(&mut file)
                             .expect("Failed to write out downloaded bytes");
                     }
                 }
             }
 
-            if !debug_so_path.exists() {
+            if !debug_so_path.exists() || File::open(&debug_so_path).is_err() {
                 if let Some(debug_so_link) =
                     &shared_package.config.info.additional_data.debug_so_link
                 {
@@ -186,14 +192,16 @@ impl SharedDependency {
                         // github url!
                         git::get_release(debug_so_link, &debug_so_path);
                     } else {
+                        // other dl link, assume it's a raw lib file download
+                        let mut response = get_agent()
+                            .get(debug_so_link)
+                            .send()
+                            .expect("Unable to download debug so file");
+
                         let mut file =
                             std::fs::File::create(debug_so_path).expect("create so file failed");
 
-                        // other dl link, assume it's a raw lib file download
-                        get_agent()
-                            .get(debug_so_link)
-                            .send()
-                            .unwrap()
+                        response
                             .copy_to(&mut file)
                             .expect("Failed to write out downloaded bytes");
                     }
@@ -211,7 +219,11 @@ impl SharedDependency {
         }
     }
 
-    pub fn collect_to_copy(&self, also_lib: bool, shared_package: &SharedPackageConfig) -> Vec<(PathBuf, PathBuf)> {
+    pub fn collect_to_copy(
+        &self,
+        also_lib: bool,
+        shared_package: &SharedPackageConfig,
+    ) -> Vec<(PathBuf, PathBuf)> {
         // TODO: Look into improving the way it gets all the things to copy
         // low priority since this also works
         let config = Config::read_combine();
@@ -244,8 +256,12 @@ impl SharedDependency {
 
             let prefix = if !use_release { "debug_" } else { "" };
 
-            let suffix = if let Some(override_so_name) =
-                shared_package.config.info.additional_data.override_so_name.clone()
+            let suffix = if let Some(override_so_name) = shared_package
+                .config
+                .info
+                .additional_data
+                .override_so_name
+                .clone()
             {
                 override_so_name
             } else {

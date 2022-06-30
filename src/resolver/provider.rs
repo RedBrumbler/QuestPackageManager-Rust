@@ -28,18 +28,15 @@ impl<'a> HackDependencyProvider<'a> {
 impl DependencyRepository for HackDependencyProvider<'_> {
     // get versions of all repositories
     fn get_versions(&self, id: &str) -> Option<Vec<PackageVersion>> {
-        // double flat map???? rust weird
-        let mut result = self.repo.get_versions(id);
-
         // we add ourselves to the gotten versions, so the local version always can be resolved as most ideal
         if *id == self.root.info.id {
-            result
-                .get_or_insert(Vec::new())
-                .push(qpackages::PackageVersion {
-                    id: self.root.info.id.clone(),
-                    version: self.root.info.version.clone(),
-                });
+            return Some(vec![qpackages::PackageVersion {
+                id: self.root.info.id.clone(),
+                version: self.root.info.version.clone(),
+            }]);
         }
+
+        let result = self.repo.get_versions(id);
 
         if result.is_none() || result.as_ref().unwrap().is_empty() {
             return None;
