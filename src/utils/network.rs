@@ -1,11 +1,12 @@
 use std::{
-    lazy,
+    sync,
     time::Duration,
 };
 
+
 use crate::data::config::Config;
 
-static AGENT: lazy::SyncOnceCell<reqwest::blocking::Client> = lazy::SyncOnceCell::new();
+static AGENT: sync::OnceLock<reqwest::blocking::Client> = sync::OnceLock::new();
 
 pub fn get_agent() -> &'static reqwest::blocking::Client {
     AGENT.get_or_init(|| {

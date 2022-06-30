@@ -1,7 +1,4 @@
-use std::{
-    io::{Read, Write},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
@@ -36,13 +33,9 @@ impl Config {
         let path = Config::global_config_path();
         std::fs::create_dir_all(Config::global_config_dir()).expect("Failed to make config folder");
 
-        if let Ok(mut file) = std::fs::File::open(path) {
+        if let Ok(file) = std::fs::File::open(path) {
             // existed
-            let mut config_str = String::new();
-            file.read_to_string(&mut config_str)
-                .expect("Reading data failed");
-
-            serde_json::from_str::<Config>(&config_str).expect("Deserializing package failed")
+            serde_json::from_reader(file).expect("Deserializing package failed")
         } else {
             // didn't exist
             Config {
@@ -53,13 +46,9 @@ impl Config {
 
     pub fn read_local() -> Config {
         let path = "qpm.settings.json";
-        if let Ok(mut file) = std::fs::File::open(path) {
+        if let Ok(file) = std::fs::File::open(path) {
             // existed
-            let mut config_str = String::new();
-            file.read_to_string(&mut config_str)
-                .expect("Reading data failed");
-
-            serde_json::from_str::<Config>(&config_str).expect("Deserializing package failed")
+            serde_json::from_reader(file).expect("Deserializing package failed")
         } else {
             // didn't exist
             Config {
@@ -77,13 +66,11 @@ impl Config {
 
         // read a local qpm.settings.json to
         let local_path = "qpm.settings.json";
-        if let Ok(mut file) = std::fs::File::open(local_path) {
-            let mut config_str = String::new();
-            file.read_to_string(&mut config_str)
-                .expect("Reading data failed");
+        if let Ok(file) = std::fs::File::open(local_path) {
 
-            let local_config =
-                serde_json::from_str::<Config>(&config_str).expect("Deserializing package failed");
+
+            let local_config: Config =
+                serde_json::from_reader(file).expect("Deserializing package failed");
 
             if local_config.symlink.is_some() {
                 config.symlink = local_config.symlink;
@@ -103,22 +90,21 @@ impl Config {
     }
 
     pub fn write(&self) {
-        let config = serde_json::to_string_pretty(&self).expect("Serialization failed");
         let path = Config::global_config_path();
 
         std::fs::create_dir_all(Config::global_config_dir()).expect("Failed to make config folder");
-        let mut file = std::fs::File::create(path).expect("create failed");
-        file.write_all(config.as_bytes()).expect("write failed");
+        let file = std::fs::File::create(path).expect("create failed");
+        serde_json::to_writer_pretty(file, &self).expect("Serialization failed");
+
         println!("Saved Config!");
     }
 
     pub fn write_local(&self) {
-        let config = serde_json::to_string_pretty(&self).expect("Serialization failed");
-        let path = "qpm.settings.json";
-
         std::fs::create_dir_all(Config::global_config_dir()).expect("Failed to make config folder");
-        let mut file = std::fs::File::create(path).expect("create failed");
-        file.write_all(config.as_bytes()).expect("write failed");
+        let path = "qpm.settings.json";
+        let file = std::fs::File::create(path).expect("create failed");
+
+        serde_json::to_writer_pretty(file, &self).expect("Serialization failed");
         println!("Saved Config!");
     }
 
