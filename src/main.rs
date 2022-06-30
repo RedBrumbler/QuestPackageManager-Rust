@@ -43,9 +43,13 @@ enum MainCommand {
     Qmod(commands::qmod::Qmod),
     /// Install to local repository
     Install(commands::install::InstallOperation),
+    /// Checks if your quest modding workspace is ready
+    Doctor
 }
 
-fn main() {
+fn main() -> color_eyre::eyre::Result<()> {
+    color_eyre::install()?;
+
     // You can handle information about subcommands by requesting their matches by name
     // (as below), requesting just the name used, or both at the same time
     match (Opts::parse() as Opts).subcmd {
@@ -60,7 +64,10 @@ fn main() {
         MainCommand::Restore => commands::restore::execute_restore_operation(),
         MainCommand::Qmod(q) => commands::qmod::execute_qmod_operation(q),
         MainCommand::Install(i) => commands::install::execute_install_operation(i),
+        MainCommand::Doctor => commands::doctor::execute_doctor_operation()?,
     }
+
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

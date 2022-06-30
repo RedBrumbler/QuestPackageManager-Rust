@@ -9,3 +9,4 @@ pub mod publish;
 pub mod qmod;
 pub mod restore;
 pub mod install;
+pub mod doctor;
