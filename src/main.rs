@@ -44,7 +44,8 @@ enum MainCommand {
     /// Install to local repository
     Install(commands::install::InstallOperation),
     /// Checks if your quest modding workspace is ready
-    Doctor
+    Doctor,
+    Download(commands::download::Download)
 }
 
 fn main() -> color_eyre::eyre::Result<()> {
@@ -65,6 +66,7 @@ fn main() -> color_eyre::eyre::Result<()> {
         MainCommand::Qmod(q) => commands::qmod::execute_qmod_operation(q),
         MainCommand::Install(i) => commands::install::execute_install_operation(i),
         MainCommand::Doctor => commands::doctor::execute_doctor_operation()?,
+        MainCommand::Download(d) => commands::download::execute_download_operation(d)?,
     }
 
     Ok(())
