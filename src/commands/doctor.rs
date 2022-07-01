@@ -1,7 +1,7 @@
 use std::{env, fs::File};
 
 
-use color_eyre::{Result, eyre::bail};
+use color_eyre::{Result, eyre::{bail, anyhow, ContextCompat, Context}, Help};
 use owo_colors::OwoColorize;
 
 // look_path returns a boolean indicating if the binary can be found in $PATH.
@@ -30,7 +30,7 @@ pub fn execute_doctor_operation() -> Result<()> {
     let ninja = look_path("ninja")?;
     let adb = look_path("adb")?;
 
-    let qpm_rust = look_path("qpm_rust")?;
+    let qpm_rust = look_path("qpm-rust")?;
 
     if !cmake {
         bail!("CMake is not installed in path!")
@@ -58,11 +58,11 @@ pub fn execute_doctor_operation() -> Result<()> {
 
     if File::open("./qpm.json").is_ok() {
         let ndk_path = env::var("ANDROID_NDK_HOME");
-
-        if ndk_path.is_err() {
+        
+        if ndk_path.is_ok() {
             println!("NDK {} found in path!", ndk_path.unwrap());
         } else if File::open("./ndkpath.txt").is_err() {
-            bail!("No ndkpath.txt or ANDROID_NDK_HOME environment variable found!")
+            return Err(anyhow!("No ndkpath.txt or ANDROID_NDK_HOME environment variable found!").error(ndk_path.unwrap_err()))
         }
     };
 
