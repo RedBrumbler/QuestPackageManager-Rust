@@ -1,12 +1,14 @@
 use std::{env, fs::File};
 
 
-use color_eyre::{Result, eyre::{bail, anyhow, ContextCompat, Context}, Help};
+use color_eyre::{Result, eyre::{bail, anyhow}, Help};
 use owo_colors::OwoColorize;
 
 // look_path returns a boolean indicating if the binary can be found in $PATH.
 #[cfg(unix)]
 fn look_path(path: &str) -> Result<bool, std::env::VarError> {
+    use std::path::Path;
+
     std::env::var("PATH").map(|paths| paths
             .split(':')
             .map(|p| format!("{}/{}", p, path))
