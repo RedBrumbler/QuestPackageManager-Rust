@@ -9,7 +9,7 @@ use crate::utils::network::get_agent;
 #[cfg(target_os = "linux")]
 static NINJA_DOWNLOAD: &str = "https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip";
 
-#[cfg(darwin)]
+#[cfg(target_os = "macos")]
 static NINJA_DOWNLOAD: &str = "https://github.com/ninja-build/ninja/releases/latest/download/ninja-mac.zip";
 
 #[cfg(windows)]
