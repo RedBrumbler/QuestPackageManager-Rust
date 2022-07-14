@@ -379,6 +379,7 @@ impl SharedPackageConfig {
             "\nset(ANDROID_PLATFORM 24)",
             "set(ANDROID_ABI arm64-v8a)",
             "set(ANDROID_STL c++_static)",
+            "set(ANDROID_USE_LEGACY_TOOLCHAIN_FILE OFF)",
             "\nset(CMAKE_TOOLCHAIN_FILE ${CMAKE_ANDROID_NDK}/build/cmake/android.toolchain.cmake)"
         ));
         result.push_str(concatln!(
