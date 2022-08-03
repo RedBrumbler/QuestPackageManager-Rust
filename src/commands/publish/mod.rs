@@ -1,7 +1,16 @@
+use clap::Args;
+
+#[derive(Args, Debug, Clone)]
+
+pub struct Publish {
+    /// the authorization header to use for publishing, if present
+    pub publish_auth: String,
+}
+
 use owo_colors::OwoColorize;
 
 use crate::data::package::SharedPackageConfig;
-pub fn execute_publish_operation() {
+pub fn execute_publish_operation(auth: &Publish) {
     let package = SharedPackageConfig::read();
     if package.config.info.url.is_none() {
         println!("Package without url can not publish!");
@@ -63,10 +72,11 @@ pub fn execute_publish_operation() {
 
     // TODO: Implement a check that gets the repo and checks if the shared folder and subfolder exists, if not it throws an error and won't let you publish
 
-    package.publish();
+    package.publish(&auth.publish_auth);
 
     println!(
         "Package {} v{} published!",
         package.config.info.id, package.config.info.version
     );
 }
+

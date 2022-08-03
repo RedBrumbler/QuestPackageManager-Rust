@@ -48,9 +48,9 @@ impl SharedPackageConfig {
         println!("Package {} Written!", self.config.info.id);
     }
 
-    pub fn publish(&self) {
+    pub fn publish(&self, auth: &str) {
         // ggez
-        qpackages::publish_package(self);
+        qpackages::publish_package(self, auth);
     }
 
     pub fn from_package(package: &PackageConfig) -> SharedPackageConfig {
