@@ -13,6 +13,8 @@ pub struct Config {
     pub timeout: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ndk_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub publish_auth: Option<String>,
 }
 
 impl Default for Config {
@@ -23,6 +25,7 @@ impl Default for Config {
             cache: Some(dirs::data_dir().unwrap().join("QPM-Rust").join("cache")),
             timeout: Some(5000),
             ndk_path: None,
+            publish_auth: None,
         }
     }
 }
@@ -56,6 +59,7 @@ impl Config {
                 cache: None,
                 timeout: None,
                 ndk_path: None,
+                publish_auth: None,
             }
         }
     }

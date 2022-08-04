@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{data::{package::SharedPackageConfig}, utils::network::get_agent};
 static API_URL: &str = "https://qpackages.com";
-static AUTH_HEADER: &str = "not that i can come up with";
 
 static VERSIONS_CACHE: Lazy<AtomicRefCell<HashMap<String, Vec<PackageVersion>>>> =
     Lazy::new(Default::default);
@@ -101,7 +100,7 @@ pub fn get_packages() -> Vec<String> {
         .expect("Into json failed")
 }
 
-pub fn publish_package(package: &SharedPackageConfig) {
+pub fn publish_package(package: &SharedPackageConfig, auth: &str) {
     let url = format!(
         "{}/{}/{}",
         API_URL, &package.config.info.id, &package.config.info.version
@@ -109,7 +108,7 @@ pub fn publish_package(package: &SharedPackageConfig) {
 
     get_agent()
         .post(&url)
-        .header("Authorization", AUTH_HEADER)
+        .header("Authorization", auth)
         .json(&package)
         .send()
         .expect("Request to qpackages.com failed");

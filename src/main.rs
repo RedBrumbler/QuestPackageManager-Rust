@@ -37,7 +37,7 @@ enum MainCommand {
     /// List all properties that are currently supported by QPM
     List(commands::list::ListOperation),
     /// Publish package
-    Publish,
+    Publish(commands::publish::Publish),
     /// Restore and resolve all dependencies from the package
     Restore,
     /// Qmod control
@@ -57,7 +57,7 @@ fn main() {
         MainCommand::Dependency(d) => commands::dependency::execute_dependency_operation(d),
         MainCommand::Package(p) => commands::package::execute_package_operation(p),
         MainCommand::List(l) => commands::list::execute_list_operation(l),
-        MainCommand::Publish => commands::publish::execute_publish_operation(),
+        MainCommand::Publish(a) => commands::publish::execute_publish_operation(&a),
         MainCommand::Restore => commands::restore::execute_restore_operation(),
         MainCommand::Qmod(q) => commands::qmod::execute_qmod_operation(q),
         MainCommand::Install(i) => commands::install::execute_install_operation(i),
