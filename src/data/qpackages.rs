@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::LazyLock as Lazy};
 
 use atomic_refcell::AtomicRefCell;
-use reqwest::blocking::Response;
+use reqwest::{blocking::Response, StatusCode};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 
@@ -106,10 +106,15 @@ pub fn publish_package(package: &SharedPackageConfig, auth: &str) {
         API_URL, &package.config.info.id, &package.config.info.version
     );
 
-    get_agent()
+    let resp = get_agent()
         .post(&url)
         .header("Authorization", auth)
         .json(&package)
         .send()
         .expect("Request to qpackages.com failed");
+    
+    if resp.status() == StatusCode::UNAUTHORIZED {
+        panic!("Could not publish to {}: Unauthorized! Did you provide the correct key?", API_URL);
+    }
+    resp.error_for_status().expect("Response not OK!");
 }
