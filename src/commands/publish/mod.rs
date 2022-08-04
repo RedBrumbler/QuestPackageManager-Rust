@@ -13,7 +13,7 @@ use crate::data::package::SharedPackageConfig;
 pub fn execute_publish_operation(auth: &Publish) {
     let package = SharedPackageConfig::read();
     if package.config.info.url.is_none() {
-        println!("Package without url can not publish!");
+        println!("Package without url can not be published!");
         return;
     }
 
