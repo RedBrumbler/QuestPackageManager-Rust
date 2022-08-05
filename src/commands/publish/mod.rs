@@ -1,10 +1,11 @@
 use clap::Args;
+use crate::data::config::get_publish_keyring;
 
 #[derive(Args, Debug, Clone)]
 
 pub struct Publish {
     /// the authorization header to use for publishing, if present
-    pub publish_auth: String,
+    pub publish_auth: Option<String>,
 }
 
 use owo_colors::OwoColorize;
@@ -72,7 +73,14 @@ pub fn execute_publish_operation(auth: &Publish) {
 
     // TODO: Implement a check that gets the repo and checks if the shared folder and subfolder exists, if not it throws an error and won't let you publish
 
-    package.publish(&auth.publish_auth);
+    if let Some(key) = &auth.publish_auth {
+        package.publish(&key);
+    } else {
+        // Empty strings are None, you shouldn't be able to publish with a None
+        let publish_key = get_publish_keyring();
+        package.publish(&publish_key.get_password().expect("Unable to get stored publish key!"));
+    }
+    
 
     println!(
         "Package {} v{} published!",
