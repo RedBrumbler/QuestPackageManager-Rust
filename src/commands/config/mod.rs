@@ -5,6 +5,7 @@ mod ndkpath;
 mod symlink;
 mod timeout;
 mod token;
+mod publish;
 
 use owo_colors::OwoColorize;
 
@@ -36,6 +37,8 @@ pub enum ConfigOperation {
     Location,
     /// Get or set the ndk path used in generation of build files
     NDKPath(ndkpath::NDKPath),
+    /// Get or set the publish key used for publish
+    Publish(publish::Key),
 }
 
 pub fn execute_config_operation(operation: Config) {
@@ -63,7 +66,8 @@ pub fn execute_config_operation(operation: Config) {
         ),
         ConfigOperation::NDKPath(p) => {
             changed_any = ndkpath::execute_ndk_config_operation(&mut config, p)
-        }
+        },
+        ConfigOperation::Publish(k) => publish::execute_key_config_operation(k),
     }
 
     if !changed_any {

@@ -12,9 +12,7 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ndk_path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub publish_auth: Option<String>,
+    pub ndk_path: Option<String>
 }
 
 impl Default for Config {
@@ -25,7 +23,6 @@ impl Default for Config {
             cache: Some(dirs::data_dir().unwrap().join("QPM-Rust").join("cache")),
             timeout: Some(5000),
             ndk_path: None,
-            publish_auth: None,
         }
     }
 }
@@ -38,7 +35,7 @@ impl Config {
 
         if let Ok(file) = std::fs::File::open(path) {
             // existed
-            serde_json::from_reader(file).expect("Deserializing package failed")
+            serde_json::from_reader(file).expect("Deserializing global config failed")
         } else {
             // didn't exist
             Config {
@@ -51,7 +48,7 @@ impl Config {
         let path = "qpm.settings.json";
         if let Ok(file) = std::fs::File::open(path) {
             // existed
-            serde_json::from_reader(file).expect("Deserializing package failed")
+            serde_json::from_reader(file).expect(&format!("Deserializing {} failed", path))
         } else {
             // didn't exist
             Config {
@@ -59,7 +56,6 @@ impl Config {
                 cache: None,
                 timeout: None,
                 ndk_path: None,
-                publish_auth: None,
             }
         }
     }
@@ -124,4 +120,8 @@ impl Config {
 #[inline]
 pub fn get_keyring() -> keyring::Entry {
     keyring::Entry::new("qpm", "github")
+}
+#[inline]
+pub fn get_publish_keyring() -> keyring::Entry {
+    keyring::Entry::new("qpm", "publish")
 }
