@@ -133,6 +133,17 @@ impl SharedDependency {
                     src_path.display().bright_yellow()
                 );
 
+                if src_path.exists() {
+                    let mut line = String::new();
+                    println!(
+                        "Confirm deletion of folder {}: (y/N)",
+                        src_path.display().bright_yellow()
+                    );
+                    let _ = std::io::stdin().read_line(&mut line).unwrap();
+                    if line.starts_with('y') || line.starts_with('Y') {
+                        remove_dir_all(&src_path).expect("Failed to remove existing src folder");
+                    }
+                }
                 // HACK: renaming seems to work, idk if it works for actual subfolders?
                 std::fs::rename(&from_path, &src_path).expect("Failed to move folder");
             } else {
