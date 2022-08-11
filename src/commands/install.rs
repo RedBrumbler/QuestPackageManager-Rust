@@ -41,7 +41,9 @@ pub fn execute_install_operation(install: InstallOperation) {
     let mut binary_path = install.binary_path;
     let mut debug_binary_path = install.debug_binary_path;
 
-    let header_only = package.additional_data.headers_only.unwrap_or(false);
+    let header_only = package.info.additional_data.headers_only.unwrap_or(false);
+    #[cfg(debug_assertions)]
+    println!("Header only: {}", header_only);
 
     if !header_only {
         if binary_path.is_none() && install.cmake_build.unwrap_or(true) {
@@ -68,11 +70,9 @@ pub fn execute_install_operation(install: InstallOperation) {
         println!("Could not find debug binary {p:?}, skipping")
     }
 
-
     if let Some(p) = &binary_path && !p.exists() {
         println!("Could not find binary {p:?}, skipping")
     }
-
 
     let mut repo = FileRepository::read();
     repo.add_artifact(
