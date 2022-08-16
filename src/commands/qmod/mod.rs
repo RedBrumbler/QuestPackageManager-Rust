@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Subcommand, Args};
+use clap::{Args, Subcommand};
 use semver::Version;
 
 mod edit;
@@ -104,12 +104,8 @@ fn execute_qmod_create_operation(create_parameters: CreateQmodJsonOperationArgs)
             .unwrap_or_else(|| "---".to_string()),
         porter: create_parameters.porter,
         version: "${version}".to_string(),
-        package_id: create_parameters
-            .package_id
-            .unwrap_or_else(|| "com.beatgames.beatsaber".to_string()),
-        package_version: create_parameters
-            .package_version
-            .unwrap_or_else(|| "1.0.0".to_string()),
+        package_id: create_parameters.package_id,
+        package_version: create_parameters.package_version,
         description: Some(
             create_parameters
                 .description
