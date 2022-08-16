@@ -92,7 +92,7 @@ pub fn execute_qmod_operation(operation: Qmod) {
 fn execute_qmod_create_operation(create_parameters: CreateQmodJsonOperationArgs) {
     let schema_version = match create_parameters.schema_version {
         Option::Some(s) => s,
-        Option::None => Version::new(0, 1, 2),
+        Option::None => Version::new(1, 0, 0),
     };
 
     let json = ModJson {
