@@ -1,4 +1,4 @@
-use clap::{Args};
+use clap::Args;
 use semver::Version;
 
 use crate::data::mod_json::ModJson;
@@ -47,10 +47,10 @@ pub fn execute_qmod_edit_operation(edit_parameters: EditQmodJsonOperationArgs) {
         }
     }
     if let Some(package_id) = edit_parameters.package_id {
-        json.package_id = package_id;
+        json.package_id = Some(package_id);
     }
     if let Some(package_version) = edit_parameters.package_version {
-        json.package_version = package_version;
+        json.package_version = Some(package_version);
     }
     if let Some(description) = edit_parameters.description {
         if description == "clear" {

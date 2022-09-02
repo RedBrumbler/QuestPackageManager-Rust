@@ -31,9 +31,11 @@ pub struct ModJson {
     /// Mod version
     pub version: String,
     /// id of the package the mod is for, ex. com.beatgaems.beatsaber
-    pub package_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub package_id: Option<String>,
     /// Version of the package, ex. 1.1.0
-    pub package_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub package_version: Option<String>,
     /// description for the mod
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -58,7 +60,7 @@ pub struct ModJson {
 impl Default for ModJson {
     fn default() -> Self {
         Self {
-            schema_version: Version::new(0, 1, 1),
+            schema_version: Version::new(1, 0, 0),
             name: Default::default(),
             id: Default::default(),
             author: Default::default(),
@@ -232,14 +234,14 @@ impl From<SharedPackageConfig> for ModJson {
             .collect::<Vec<String>>();
 
         Self {
-            schema_version: Version::new(0, 1, 1), // TODO: Move to 0.1.2 when it is *actually* usable
+            schema_version: Version::new(1, 0, 0),
             name: shared_package.config.info.name.clone(),
             id: shared_package.config.info.id.clone(),
             author: Default::default(),
             porter: None,
             version: shared_package.config.info.version.to_string(),
-            package_id: "com.beatgames.beatsaber".to_string(),
-            package_version: "*".to_string(),
+            package_id: None,
+            package_version: None,
             description: None,
             cover_image: None,
             is_library: None,
