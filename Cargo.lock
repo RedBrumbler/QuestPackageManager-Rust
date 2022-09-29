@@ -1368,6 +1368,7 @@ name = "qpm-rust"
 version = "0.1.0"
 dependencies = [
  "atomic_refcell",
+ "bytes",
  "clap",
  "color-eyre",
  "cursed-semver-parser",
