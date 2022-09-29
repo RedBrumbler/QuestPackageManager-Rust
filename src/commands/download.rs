@@ -32,7 +32,7 @@ const CMAKE_DOWNLOAD: &str =
 const CMAKE_DOWNLOAD: &str =
     "https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-linux-x86_64.tar.gz";
 
-#[cfg(target_os = "mac")]
+#[cfg(target_os = "macos")]
 const CMAKE_DOWNLOAD: &str = "https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-macos-universal.tar.gz";
 
 #[derive(Args, Debug, Clone)]
