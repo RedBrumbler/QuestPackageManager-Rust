@@ -57,7 +57,7 @@ impl FileRepository {
 
     fn copy_to_cache(a: &PathBuf, b: &PathBuf) {
         if a.is_dir() {
-            fs::create_dir_all(&b)
+            fs::create_dir_all(b)
                 .unwrap_or_else(|e| panic!("Failed to create {b:?} path. Cause {e:?}"));
         } else {
             let parent = b.parent().unwrap();

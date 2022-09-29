@@ -1,5 +1,6 @@
 #![feature(once_cell)]
 #![feature(map_try_insert)]
+#![feature(let_chains)]
 
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};

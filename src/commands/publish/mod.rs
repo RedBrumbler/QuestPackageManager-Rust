@@ -74,7 +74,7 @@ pub fn execute_publish_operation(auth: &Publish) {
     // TODO: Implement a check that gets the repo and checks if the shared folder and subfolder exists, if not it throws an error and won't let you publish
 
     if let Some(key) = &auth.publish_auth {
-        package.publish(&key);
+        package.publish(key);
     } else {
         // Empty strings are None, you shouldn't be able to publish with a None
         let publish_key = get_publish_keyring();
