@@ -21,15 +21,18 @@ const NINJA_DOWNLOAD: &str =
 const NINJA_DOWNLOAD: &str =
     "https://github.com/ninja-build/ninja/releases/latest/download/ninja-win.zip";
 
-#[cfg(target_os = "linux")]
+/// CMAKE
+/// TODO: Extract tars on Linux/Mac
+
+#[cfg(windows)]
 const CMAKE_DOWNLOAD: &str =
     "https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-windows-x86_64.zip";
 
-#[cfg(target_os = "macos")]
+#[cfg(target_os = "linux")]
 const CMAKE_DOWNLOAD: &str =
     "https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-linux-x86_64.tar.gz";
 
-#[cfg(windows)]
+#[cfg(target_os = "mac")]
 const CMAKE_DOWNLOAD: &str = "https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-macos-universal.tar.gz";
 
 #[derive(Args, Debug, Clone)]
@@ -41,6 +44,7 @@ pub struct Download {
 #[derive(Subcommand, Debug, Clone)]
 pub enum DownloadOperation {
     Ninja,
+    #[clap(name = "cmake")]
     CMake, // TODO: NDK
            // TODO: CMake?
 }
@@ -57,10 +61,12 @@ pub fn execute_download_operation(download_operation: Download) -> Result<()> {
     let final_path = exe.parent().unwrap();
 
     // extract if zip
-    let response = get_agent().get(url).send()?;
+    let response = get_agent().get(url).send()?.error_for_status()?;
 
-    let buffer = Cursor::new(response.bytes()?);
-    // Extract to tmp folder
+    let bytes = response.bytes()?;
+    let buffer = Cursor::new(bytes);
+
+    // Extract to tmp folde
     let mut archive = ZipArchive::new(buffer)?;
 
     if archive.len() == 1 {
