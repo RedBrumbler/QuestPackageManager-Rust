@@ -1,3 +1,6 @@
+# Deprecation notice
+This version of qpm is deprecated, if you are looking for qpm for quest modding purposes you should get it from the new location at https://github.com/QuestPackageManager/QPM.CLI
+
 # QuestPackageManager-Rust
 
 QPM but rusty, this is a program that handles package downloading for quest modding, allowing modders to create packages to provide functionalities for mods.
