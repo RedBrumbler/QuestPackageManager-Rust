@@ -89,7 +89,7 @@ impl SharedDependency {
             }
 
             // src did not exist, this means that we need to download the repo/zip file from packageconfig.info.url
-            std::fs::create_dir_all(&src_path.parent().unwrap())
+            std::fs::create_dir_all(src_path.parent().unwrap())
                 .expect("Failed to create lib path");
             let url = shared_package.config.info.url.as_ref().unwrap();
             if url.contains("github.com") {
@@ -366,7 +366,7 @@ impl SharedDependency {
 
             // make sure to parent dir exists!
             std::fs::create_dir_all(to.parent().unwrap()).expect("Failed to create parent folder");
-            if let Err(e) = symlink::symlink_auto(&from, &to) {
+            if let Err(e) = symlink::symlink_auto(from, to) {
                 #[cfg(windows)]
                 println!("Failed to create symlink: {}\nfalling back to copy, did the link already exist, or did you not enable windows dev mode?\nTo disable this warning (and default to copy), use the command {}", e.bright_red(), "qpm config symlink disable".bright_yellow());
                 #[cfg(not(windows))]
@@ -378,14 +378,14 @@ impl SharedDependency {
                     options.copy_inside = true;
                     options.content_only = true;
                     options.skip_exist = true;
-                    copy_directory(&from, &to, &options).unwrap_or_else(|_| {
+                    copy_directory(from, to, &options).unwrap_or_else(|_| {
                         panic!("Failed to copy directory! From {:#?} To {:#?}", &from, &to)
                     }); // ignore warning, let it raise the error for more details.
                 } else if from.is_file() {
                     // we can get the parent beccause this is a file path
-                    std::fs::create_dir_all(&to.parent().unwrap())
+                    std::fs::create_dir_all(to.parent().unwrap())
                         .expect("Failed to create containing directory");
-                    std::fs::copy(&from, &to).expect("Failed to copy file!");
+                    std::fs::copy(from, to).expect("Failed to copy file!");
                 }
             }
         }
@@ -411,18 +411,18 @@ impl SharedDependency {
             if !from.exists() {
                 println!("The file or folder\n\t'{}'\ndid not exist! what happened to the cache? you should probably run {} to make sure everything is in order...", from.display().bright_yellow(), "qpm cache clear".bright_yellow());
             } else if from.is_dir() {
-                std::fs::create_dir_all(&to).expect("Failed to create destination folder");
+                std::fs::create_dir_all(to).expect("Failed to create destination folder");
                 let mut options = fs_extra::dir::CopyOptions::new();
                 options.overwrite = true;
                 options.copy_inside = true;
                 options.content_only = true;
                 // copy it over
-                copy_directory(&from, &to, &options).expect("Failed to copy directory!");
+                copy_directory(from, to, &options).expect("Failed to copy directory!");
             } else if from.is_file() {
                 // if it's a file, copy that over instead
                 let mut options = fs_extra::file::CopyOptions::new();
                 options.overwrite = true;
-                copy_file(&from, &to, &options).expect("Failed to copy file!");
+                copy_file(from, to, &options).expect("Failed to copy file!");
             }
         }
     }

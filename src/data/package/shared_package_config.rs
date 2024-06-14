@@ -172,9 +172,7 @@ impl SharedPackageConfig {
                         let listname = format!(
                             "{}_{}_extra",
                             path_str
-                                .replace('/', "_")
-                                .replace('\\', "_")
-                                .replace('-', "_"),
+                                .replace(['/', '\\', '-'], "_"),
                             shared_dep.dependency.id.replace('-', "_")
                         );
 
@@ -227,9 +225,7 @@ impl SharedPackageConfig {
                             let listname = format!(
                                 "{}_{}_local_extra",
                                 path_str
-                                    .replace('/', "_")
-                                    .replace('\\', "_")
-                                    .replace('-', "_"),
+                                    .replace(['/', '\\', '-'], "_"),
                                 shared_dep.dependency.id.replace('-', "_")
                             );
 

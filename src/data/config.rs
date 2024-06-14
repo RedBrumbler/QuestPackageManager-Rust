@@ -48,7 +48,7 @@ impl Config {
         let path = "qpm.settings.json";
         if let Ok(file) = std::fs::File::open(path) {
             // existed
-            serde_json::from_reader(file).expect(&format!("Deserializing {} failed", path))
+            serde_json::from_reader(file).unwrap_or_else(|_| panic!("Deserializing {} failed", path))
         } else {
             // didn't exist
             Config {

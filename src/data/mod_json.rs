@@ -130,7 +130,7 @@ impl ModJson {
 
     pub fn get_template_path() -> std::path::PathBuf {
         std::path::PathBuf::new()
-            .join(&Self::get_template_name())
+            .join(Self::get_template_name())
             .canonicalize()
             .unwrap()
     }

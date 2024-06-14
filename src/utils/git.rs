@@ -78,7 +78,7 @@ pub fn get_release_with_token(url: &str, out: &std::path::Path, token: &str) -> 
     let data = match get_agent().get(&asset_data_link).send() {
         Ok(o) => o.json::<GithubReleaseData>().unwrap(),
         Err(e) => {
-            let error_string = e.to_string().replace(&token, "***");
+            let error_string = e.to_string().replace(token, "***");
             panic!("{}", error_string);
         }
     };
@@ -119,7 +119,7 @@ pub fn clone(mut url: String, branch: Option<&String>, out: &std::path::Path) ->
     let mut git = std::process::Command::new("git");
     git.arg("clone")
         .arg(format!("{}.git", url))
-        .arg(&out)
+        .arg(out)
         .arg("--depth")
         .arg("1")
         .arg("--recurse-submodules")
